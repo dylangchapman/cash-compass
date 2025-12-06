@@ -1,0 +1,110 @@
+date,merchant,category,amount,type,notes
+2024-07-01,Company Payroll,Income,3200,credit,Monthly salary
+2024-07-02,Safeway,Groceries,92.45,debit,Weekly groceries
+2024-07-03,Starbucks,Coffee,6.25,debit,
+2024-07-03,Uber,Transportation,14.80,debit,
+2024-07-04,Netflix,Subscription,15.99,debit,Recurring
+2024-07-04,Spotify,Subscription,10.99,debit,Recurring
+2024-07-05,Apartment Rent,Rent,1450,debit,Monthly rent
+2024-07-06,Shell Gas,Transportation,42.15,debit,
+2024-07-07,Amazon,Shopping,56.23,debit,
+2024-07-08,Local Diner,Restaurants,18.40,debit,
+2024-07-10,Fiverr Client,Income,240,credit,Freelance work
+2024-07-11,Apple iCloud,Subscription,2.99,debit,Recurring
+2024-07-12,Trader Joe's,Groceries,84.33,debit,
+2024-07-15,GameBox Online,Subscription,7.99,debit,Possible gray charge
+2024-07-17,Target,Shopping,27.18,debit,
+2024-07-19,AMC Theaters,Entertainment,22.00,debit,
+2024-07-21,Chipotle,Restaurants,11.05,debit,
+2024-07-25,Electric Utility,Utilities,118.40,debit,
+2024-07-27,StreamNow+ Trial,Subscription,1.99,debit,Converted trial
+2024-07-29,Walmart,Groceries,64.15,debit,
+
+2024-08-01,Company Payroll,Income,3200,credit,Monthly salary
+2024-08-02,Safeway,Groceries,96.10,debit,
+2024-08-03,Starbucks,Coffee,5.95,debit,
+2024-08-04,Netflix,Subscription,15.99,debit,Recurring
+2024-08-04,Spotify,Subscription,10.99,debit,Recurring
+2024-08-05,Apartment Rent,Rent,1450,debit,
+2024-08-06,Shell Gas,Transportation,44.33,debit,
+2024-08-07,Amazon,Shopping,72.99,debit,
+2024-08-10,Fiverr Client,Income,180,credit,
+2024-08-11,Apple iCloud,Subscription,2.99,debit,Recurring
+2024-08-12,Trader Joe's,Groceries,82.22,debit,
+2024-08-14,GameBox Online,Subscription,7.99,debit,Possible gray charge
+2024-08-16,Target,Shopping,33.18,debit,
+2024-08-18,Local Pub,Restaurants,29.80,debit,
+2024-08-22,Electric Utility,Utilities,124.60,debit,
+2024-08-25,StreamNow+ Trial,Subscription,7.99,debit,Converted trial spike
+2024-08-29,Walmart,Groceries,68.90,debit,
+
+2024-09-01,Company Payroll,Income,3200,credit,
+2024-09-02,Safeway,Groceries,101.44,debit,
+2024-09-03,Starbucks,Coffee,6.10,debit,
+2024-09-04,Netflix,Subscription,15.99,debit,
+2024-09-04,Spotify,Subscription,10.99,debit,
+2024-09-05,Apartment Rent,Rent,1450,debit,
+2024-09-06,Shell Gas,Transportation,40.20,debit,
+2024-09-08,Fiverr Client,Income,315,credit,
+2024-09-10,Apple iCloud,Subscription,2.99,debit,
+2024-09-11,Trader Joe's,Groceries,90.44,debit,
+2024-09-12,Best Buy,Shopping,247.99,debit,Anomaly—large electronics purchase
+2024-09-14,GameBox Online,Subscription,7.99,debit,
+2024-09-17,Target,Shopping,41.55,debit,
+2024-09-20,Electric Utility,Utilities,119.60,debit,
+2024-09-22,Chipotle,Restaurants,12.25,debit,
+2024-09-25,StreamNow+ Trial,Subscription,7.99,debit,
+2024-09-28,Walmart,Groceries,70.88,debit,
+
+2024-10-01,Company Payroll,Income,3200,credit,
+2024-10-02,Safeway,Groceries,110.32,debit,
+2024-10-03,Starbucks,Coffee,6.80,debit,
+2024-10-04,Netflix,Subscription,15.99,debit,
+2024-10-04,Spotify,Subscription,10.99,debit,
+2024-10-05,Apartment Rent,Rent,1450,debit,
+2024-10-06,Shell Gas,Transportation,47.11,debit,
+2024-10-07,Amazon,Shopping,39.99,debit,
+2024-10-10,Fiverr Client,Income,260,credit,
+2024-10-11,Apple iCloud,Subscription,2.99,debit,
+2024-10-12,Trader Joe's,Groceries,94.25,debit,
+2024-10-14,GameBox Online,Subscription,7.99,debit,
+2024-10-17,Target,Shopping,38.44,debit,
+2024-10-20,Electric Utility,Utilities,113.45,debit,
+2024-10-23,Local Diner,Restaurants,25.60,debit,
+2024-10-25,StreamNow+ Trial,Subscription,7.99,debit,
+2024-10-28,Walmart,Groceries,72.18,debit,
+
+2024-11-01,Company Payroll,Income,3200,credit,
+2024-11-02,Safeway,Groceries,105.77,debit,
+2024-11-03,Starbucks,Coffee,7.15,debit,
+2024-11-04,Netflix,Subscription,15.99,debit,
+2024-11-04,Spotify,Subscription,10.99,debit,
+2024-11-05,Apartment Rent,Rent,1450,debit,
+2024-11-06,Shell Gas,Transportation,55.30,debit,
+2024-11-08,Fiverr Client,Income,410,credit,
+2024-11-10,Apple iCloud,Subscription,2.99,debit,
+2024-11-11,Trader Joe's,Groceries,89.40,debit,
+2024-11-13,GameBox Online,Subscription,7.99,debit,
+2024-11-15,Best Buy,Shopping,599.99,debit,Major anomaly (TV purchase)
+2024-11-18,Electric Utility,Utilities,142.60,debit,
+2024-11-21,Chipotle,Restaurants,14.12,debit,
+2024-11-25,StreamNow+ Trial,Subscription,7.99,debit,
+2024-11-28,Walmart,Groceries,78.40,debit,
+
+2024-12-01,Company Payroll,Income,3200,credit,
+2024-12-02,Safeway,Groceries,112.90,debit,
+2024-12-03,Starbucks,Coffee,6.45,debit,
+2024-12-04,Netflix,Subscription,15.99,debit,
+2024-12-04,Spotify,Subscription,10.99,debit,
+2024-12-05,Apartment Rent,Rent,1450,debit,
+2024-12-06,Shell Gas,Transportation,39.22,debit,
+2024-12-08,Fiverr Client,Income,280,credit,
+2024-12-10,Apple iCloud,Subscription,2.99,debit,
+2024-12-11,Trader Joe's,Groceries,103.55,debit,
+2024-12-12,GameBox Online,Subscription,7.99,debit,
+2024-12-15,Target,Shopping,52.78,debit,Holiday shopping
+2024-12-18,Electric Utility,Utilities,129.10,debit,
+2024-12-20,Local Pub,Restaurants,35.44,debit,
+2024-12-22,StreamNow+ Trial,Subscription,7.99,debit,
+2024-12-28,Walmart,Groceries,81.99,debit,
+2024-12-30,ShopEZ Protection,Subscription,5.99,debit,Suspicious protection plan
