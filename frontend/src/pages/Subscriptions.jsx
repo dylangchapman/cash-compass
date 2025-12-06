@@ -149,14 +149,14 @@ export default function Subscriptions() {
             <Card
               key={idx}
               borderLeft="4px solid"
-              borderLeftColor={sub.is_gray_charge ? 'warning.500' : 'primary.500'}
-              bg={sub.is_gray_charge ? 'warning.50' : 'white'}
+              borderLeftColor={sub.is_gray_charge ? 'warning.600' : 'primary.500'}
+              bg={sub.is_gray_charge ? 'warning.100' : 'white'}
             >
               <CardBody p={5}>
                 <HStack justify="space-between" mb={4}>
                   <VStack align="start" spacing={2}>
                     <HStack spacing={3}>
-                      <Text fontWeight="semibold" fontSize="lg" color="neutral.900">
+                      <Text fontWeight="semibold" fontSize="lg" color="black">
                         {sub.merchant}
                       </Text>
                       {sub.is_gray_charge && (
@@ -167,7 +167,7 @@ export default function Subscriptions() {
                       </StatusBadge>
                     </HStack>
 
-                    <Text fontSize="sm" color="neutral.600" textTransform="capitalize">
+                    <Text fontSize="sm" color="neutral.700" textTransform="capitalize" fontWeight="medium">
                       {sub.frequency} billing
                     </Text>
                   </VStack>
@@ -182,20 +182,28 @@ export default function Subscriptions() {
                   </VStack>
                 </HStack>
 
-                <Grid templateColumns="repeat(2, 1fr)" gap={6} pt={4} borderTop="1px solid" borderColor="neutral.200">
+                <Grid templateColumns="repeat(3, 1fr)" gap={6} pt={4} borderTop="1px solid" borderColor="neutral.200">
                   <Box>
                     <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
                       Last Charged
                     </Text>
-                    <Text fontSize="sm" fontWeight="medium" color="neutral.700">
+                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
                       {sub.last_charge}
                     </Text>
                   </Box>
                   <Box>
                     <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
-                      Total Spent (6 months)
+                      Monthly Cost
                     </Text>
-                    <Text fontSize="sm" fontWeight="medium" color="neutral.700">
+                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
+                      ${sub.frequency === 'monthly' ? sub.amount?.toFixed(2) : (sub.amount * 12)?.toFixed(2)}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
+                      YTD Total
+                    </Text>
+                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
                       ${sub.total_spent?.toFixed(2)}
                     </Text>
                   </Box>

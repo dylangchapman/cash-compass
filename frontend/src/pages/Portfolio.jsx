@@ -106,7 +106,7 @@ export default function Portfolio() {
       {/* Hero Section */}
       <Box
         bgGradient={isPositive ? "linear(to-br, success.500, success.700)" : "linear(to-br, neutral.600, neutral.800)"}
-        color="white"
+        color="black"
         py={16}
         mb={12}
         borderRadius="md"
@@ -246,7 +246,7 @@ export default function Portfolio() {
                     <Text fontWeight="semibold" color="neutral.900">Stocks</Text>
                     <StatusBadge status="info">{portfolio?.allocation.stocks.percent.toFixed(1)}%</StatusBadge>
                   </HStack>
-                  <Text fontSize="xl" fontWeight="semibold" color="primary.700">
+                  <Text fontSize="xl" fontWeight="semibold" color="primary.800">
                     ${portfolio?.allocation.stocks.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
                 </Box>
@@ -256,7 +256,7 @@ export default function Portfolio() {
                     <Text fontWeight="semibold" color="neutral.900">ETFs</Text>
                     <StatusBadge status="success">{portfolio?.allocation.etfs.percent.toFixed(1)}%</StatusBadge>
                   </HStack>
-                  <Text fontSize="xl" fontWeight="semibold" color="success.700">
+                  <Text fontSize="xl" fontWeight="semibold" color="success.800">
                     ${portfolio?.allocation.etfs.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
                 </Box>
@@ -266,7 +266,7 @@ export default function Portfolio() {
                     <Text fontWeight="semibold" color="neutral.900">Bonds</Text>
                     <StatusBadge status="warning">{portfolio?.allocation.bonds.percent.toFixed(1)}%</StatusBadge>
                   </HStack>
-                  <Text fontSize="xl" fontWeight="semibold" color="warning.700">
+                  <Text fontSize="xl" fontWeight="semibold" color="warning.800">
                     ${portfolio?.allocation.bonds.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
                 </Box>
@@ -308,16 +308,16 @@ export default function Portfolio() {
                     const isGain = holding.gain_loss >= 0
                     return (
                       <Tr key={idx} _hover={{ bg: 'neutral.50' }}>
-                        <Td fontWeight="semibold" color="primary.600">{holding.symbol}</Td>
-                        <Td fontSize="sm" color="neutral.700">{holding.name}</Td>
-                        <Td isNumeric fontSize="sm">{holding.shares}</Td>
-                        <Td isNumeric fontSize="sm">${holding.cost_basis.toFixed(2)}</Td>
-                        <Td isNumeric fontSize="sm" fontWeight="medium">${holding.current_price.toFixed(2)}</Td>
-                        <Td isNumeric fontWeight="semibold">${holding.current_value.toFixed(2)}</Td>
-                        <Td isNumeric fontWeight="semibold" color={isGain ? 'success.600' : 'error.600'}>
+                        <Td fontWeight="semibold" color="primary.700">{holding.symbol}</Td>
+                        <Td fontSize="sm" color="neutral.800">{holding.name}</Td>
+                        <Td isNumeric fontSize="sm" color="neutral.800">{holding.shares}</Td>
+                        <Td isNumeric fontSize="sm" color="neutral.800">${holding.cost_basis.toFixed(2)}</Td>
+                        <Td isNumeric fontSize="sm" fontWeight="medium" color="neutral.900">${holding.current_price.toFixed(2)}</Td>
+                        <Td isNumeric fontWeight="semibold" color="neutral.900">${holding.current_value.toFixed(2)}</Td>
+                        <Td isNumeric fontWeight="semibold" color={isGain ? 'success.700' : 'error.700'}>
                           {isGain ? '+' : ''}${holding.gain_loss.toFixed(2)}
                         </Td>
-                        <Td isNumeric fontWeight="semibold" color={isGain ? 'success.600' : 'error.600'}>
+                        <Td isNumeric fontWeight="semibold" color={isGain ? 'success.700' : 'error.700'}>
                           {isGain ? '+' : ''}{holding.gain_loss_percent.toFixed(2)}%
                         </Td>
                       </Tr>
