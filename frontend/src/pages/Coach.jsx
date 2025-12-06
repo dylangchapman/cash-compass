@@ -6,20 +6,25 @@ import {
   Button,
   VStack,
   HStack,
-  Avatar,
   Spinner,
   Icon,
   useToast,
-  Wrap,
-  WrapItem,
   Container,
+  Flex,
+  InputGroup,
+  InputRightElement,
+  Alert,
+  AlertIcon,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
 } from '@chakra-ui/react'
-import { Card, CardBody } from '@chakra-ui/react'
-import { MdSend, MdSecurity } from 'react-icons/md'
+import { MdSend, MdInfo, MdDelete, MdWarning } from 'react-icons/md'
 import { financialAPI } from '../services/api'
-import PageHeader from '../components/layout/PageHeader'
-import Section from '../components/ui/Section'
-import StatusBadge from '../components/ui/StatusBadge'
 
 const SUGGESTED_QUESTIONS = [
   "How can I save more money?",
@@ -42,6 +47,7 @@ export default function Coach() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
   const toast = useToast()
+  const clearHistoryModal = useDisclosure()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -57,7 +63,6 @@ export default function Coach() {
     if (!textToSend.trim()) {
       toast({
         title: 'Empty message',
-        description: 'Please enter a message',
         status: 'warning',
         duration: 2000,
       })
@@ -113,209 +118,326 @@ export default function Coach() {
     sendMessage(question)
   }
 
+  const handleClearHistory = () => {
+    setMessages([
+      {
+        role: 'assistant',
+        content: "Chat history cleared. How can I help you today?",
+        timestamp: new Date(),
+      }
+    ])
+    clearHistoryModal.onClose()
+    toast({
+      title: 'Chat history cleared',
+      status: 'success',
+      duration: 2000,
+    })
+  }
+
   return (
-    <Box>
-      {/* Hero Section */}
-      <Box
-        bgGradient="linear(to-br, primary.600, purple.800)"
-        color="white"
-        py={16}
-        mb={12}
-        borderRadius="md"
-      >
-        <Container maxW="container.xl">
-          <VStack align="start" spacing={6}>
+    <Box bg="white" minH="100vh">
+      {/* HERO SECTION */}
+      <Box bg="neutral.900" color="white" pt={32} pb={20}>
+        <Container maxW="1400px">
+          <VStack align="start" spacing={8}>
             <Box>
-              <Text fontSize="5xl" fontWeight="bold" letterSpacing="tight" lineHeight="1.1">
+              <Text
+                fontSize={{ base: '4xl', md: '5xl', lg: '6xl' }}
+                fontWeight="black"
+                letterSpacing="tighter"
+                lineHeight="none"
+                mb={4}
+              >
                 Financial Coach
               </Text>
-              <Text fontSize="xl" mt={3} opacity={0.9}>
-                Get personalized financial advice powered by AI
+              <Text
+                fontSize={{ base: 'lg', md: 'xl' }}
+                color="neutral.400"
+                fontWeight="normal"
+                maxW="700px"
+              >
+                Get personalized advice based on your spending patterns and financial goals
               </Text>
             </Box>
-
-            <HStack spacing={3} bg="whiteAlpha.200" px={4} py={3} borderRadius="md">
-              <Icon as={MdSecurity} boxSize={5} />
-              <Text fontSize="sm" opacity={0.95}>
-                Your conversations are private and secure. All data is encrypted.
-              </Text>
-            </HStack>
           </VStack>
         </Container>
       </Box>
 
-      {/* Suggested Questions */}
-      <Box bg="neutral.50" py={12} mb={12}>
-        <Container maxW="container.xl">
-          <Box mb={6}>
-            <Text fontSize="3xl" fontWeight="bold" color="neutral.900" mb={2}>
-              Quick Start
+      {/* AI DISCLAIMER */}
+      <Box bg="neutral.100" py={4} borderBottom="1px solid" borderColor="neutral.200">
+        <Container maxW="1400px">
+          <HStack spacing={3} justify="center">
+            <Icon as={MdInfo} boxSize={5} color="neutral.600" />
+            <Text fontSize="sm" color="neutral.700">
+              This AI assistant analyzes your transaction data to provide guidance.
+              Conversations are stored to improve responses.
+              This is not licensed financial advice - consult a professional for investment decisions.
             </Text>
-            <Text fontSize="lg" color="neutral.600">
-              Try these common questions to get started
-            </Text>
-          </Box>
-
-          <Wrap spacing={3}>
-            {SUGGESTED_QUESTIONS.map((question, idx) => (
-              <WrapItem key={idx}>
-                <Button
-                  size="md"
-                  variant="secondary"
-                  onClick={() => useSuggestedQuestion(question)}
-                >
-                  {question}
-                </Button>
-              </WrapItem>
-            ))}
-          </Wrap>
+          </HStack>
         </Container>
       </Box>
 
-      {/* Chat Messages */}
-      <Box bg="white" py={12}>
-        <Container maxW="container.xl">
+      {/* SUGGESTED QUESTIONS */}
+      <Box bg="white" py={8} borderBottom="1px solid" borderColor="neutral.200">
+        <Container maxW="1400px">
+          <Flex justify="space-between" align="center" mb={4}>
+            <Text fontSize="sm" fontWeight="semibold" color="neutral.600" textTransform="uppercase" letterSpacing="wider">
+              Suggested Questions
+            </Text>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="neutral.600"
+              leftIcon={<MdDelete />}
+              onClick={clearHistoryModal.onOpen}
+            >
+              Clear History
+            </Button>
+          </Flex>
+          <Flex gap={3} flexWrap="wrap">
+            {SUGGESTED_QUESTIONS.map((question, idx) => (
+              <Button
+                key={idx}
+                size="sm"
+                variant="secondary"
+                onClick={() => useSuggestedQuestion(question)}
+                fontWeight="medium"
+              >
+                {question}
+              </Button>
+            ))}
+          </Flex>
+        </Container>
+      </Box>
+
+      {/* CHAT INTERFACE */}
+      <Box py={12}>
+        <Container maxW="1200px">
           <Box
-            h="650px"
-            bg="neutral.50"
-            borderRadius="md"
-            border="1px solid"
+            bg="white"
+            border="2px solid"
             borderColor="neutral.200"
+            borderRadius="8px"
+            h="600px"
             display="flex"
             flexDirection="column"
+            overflow="hidden"
           >
+            {/* Messages Area */}
             <Box
               flex="1"
               overflowY="auto"
-              display="flex"
-              flexDirection="column"
-              gap={6}
               p={8}
-              bg="white"
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: '#fafafa',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#d4d4d8',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#a1a1aa',
+                },
+              }}
             >
-            {messages.map((message, idx) => (
-              <Box key={idx}>
-                {message.role === 'assistant' ? (
-                  <HStack align="start" spacing={4}>
-                    <Avatar
-                      size="sm"
-                      bg="primary.500"
-                      color="white"
-                      name="FC"
-                    />
-                    <VStack align="start" spacing={3} flex={1} maxW="85%">
-                      <Box
-                        bg="neutral.100"
-                        px={5}
-                        py={4}
-                        borderRadius="md"
-                        borderTopLeftRadius="sm"
-                      >
-                        <Text color="neutral.900" lineHeight="tall" fontSize="md">
-                          {message.content}
-                        </Text>
-                      </Box>
+              <VStack spacing={8} align="stretch">
+                {messages.map((message, idx) => (
+                  <MessageBlock key={idx} message={message} />
+                ))}
 
-                      {message.suggestions && message.suggestions.length > 0 && (
-                        <VStack align="start" spacing={2} pl={2}>
-                          <Text fontSize="xs" fontWeight="semibold" color="neutral.600" textTransform="uppercase" letterSpacing="wide">
-                            Key Takeaways
-                          </Text>
-                          {message.suggestions.map((suggestion, sidx) => (
-                            <StatusBadge key={sidx} status="info">
-                              {suggestion}
-                            </StatusBadge>
-                          ))}
-                        </VStack>
-                      )}
-
-                      <Text fontSize="xs" color="neutral.500" pl={2}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                ) : (
-                  <HStack align="start" spacing={4} justify="flex-end">
-                    <VStack align="end" spacing={2} flex={1} maxW="85%">
-                      <Box
-                        bg="primary.500"
-                        color="white"
-                        px={5}
-                        py={4}
-                        borderRadius="md"
-                        borderTopRightRadius="sm"
-                      >
-                        <Text lineHeight="tall" fontSize="md">
-                          {message.content}
-                        </Text>
-                      </Box>
-                      <Text fontSize="xs" color="neutral.500" pr={2}>
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </VStack>
-                    <Avatar
-                      size="sm"
-                      bg="neutral.600"
-                      color="white"
-                      name="You"
-                    />
-                  </HStack>
-                )}
-              </Box>
-            ))}
-
-            {isLoading && (
-              <HStack align="start" spacing={4}>
-                <Avatar size="sm" bg="primary.500" color="white" name="FC" />
-                <Box bg="neutral.100" px={5} py={4} borderRadius="md" borderTopLeftRadius="sm">
-                  <HStack spacing={2}>
-                    <Spinner size="sm" color="primary.500" />
-                    <Text color="neutral.600" fontSize="md">
-                      Analyzing...
+                {isLoading && (
+                  <HStack spacing={3} py={4}>
+                    <Spinner size="sm" color="neutral.900" />
+                    <Text fontSize="sm" color="neutral.600" fontWeight="medium">
+                      Analyzing your data...
                     </Text>
                   </HStack>
-                </Box>
-              </HStack>
-            )}
+                )}
 
-              <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
+              </VStack>
             </Box>
 
             {/* Input Area */}
             <Box
               p={6}
-              borderTop="1px solid"
+              borderTop="2px solid"
               borderColor="neutral.200"
-              bg="white"
+              bg="neutral.50"
             >
-            <HStack spacing={3}>
-              <Input
-                placeholder="Ask your financial coach anything..."
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={isLoading}
-                size="lg"
-                bg="white"
-                _focus={{
-                  borderColor: 'primary.500',
-                  boxShadow: '0 0 0 1px var(--chakra-colors-primary-500)',
-                }}
-              />
-              <Button
-                onClick={() => sendMessage()}
-                isLoading={isLoading}
-                loadingText="Sending"
-                size="lg"
-                leftIcon={<MdSend />}
-                px={8}
-              >
-                Send
-              </Button>
-            </HStack>
+              <InputGroup size="lg">
+                <Input
+                  placeholder="Ask your financial coach anything..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  disabled={isLoading}
+                  bg="white"
+                  color="neutral.900"
+                  fontSize="md"
+                  h="56px"
+                  pr="120px"
+                />
+                <InputRightElement width="110px" h="56px">
+                  <Button
+                    onClick={() => sendMessage()}
+                    isLoading={isLoading}
+                    size="md"
+                    leftIcon={<MdSend />}
+                    h="40px"
+                  >
+                    Send
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
             </Box>
           </Box>
         </Container>
+      </Box>
+
+      {/* Clear History Modal */}
+      <Modal isOpen={clearHistoryModal.isOpen} onClose={clearHistoryModal.onClose}>
+        <ModalOverlay bg="blackAlpha.700" />
+        <ModalContent
+          bg="neutral.800"
+          border="2px solid"
+          borderColor="neutral.700"
+          borderRadius="8px"
+        >
+          <ModalHeader color="white">Clear Chat History</ModalHeader>
+          <ModalBody>
+            <VStack align="stretch" spacing={4}>
+              <HStack spacing={3} color="warning.400">
+                <Icon as={MdWarning} boxSize={6} />
+                <Text fontWeight="semibold" color="warning.400">This will delete all messages</Text>
+              </HStack>
+              <Text color="neutral.300">
+                Your conversation history will be permanently deleted. This action cannot be undone.
+              </Text>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              mr={3}
+              onClick={clearHistoryModal.onClose}
+              color="neutral.300"
+              _hover={{ bg: 'neutral.700', color: 'white' }}
+            >
+              Cancel
+            </Button>
+            <Button bg="error.600" color="white" _hover={{ bg: 'error.500' }} onClick={handleClearHistory}>
+              Clear History
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
+  )
+}
+
+// Message Block Component
+function MessageBlock({ message }) {
+  const isAssistant = message.role === 'assistant'
+
+  if (isAssistant) {
+    return (
+      <Box>
+        <HStack spacing={3} mb={3} align="center">
+          <Box
+            w="32px"
+            h="32px"
+            bg="neutral.900"
+            borderRadius="6px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Text fontSize="xs" fontWeight="bold" color="white">AI</Text>
+          </Box>
+          <Text fontSize="sm" fontWeight="bold" color="neutral.900">
+            Financial Coach
+          </Text>
+          <Text fontSize="xs" color="neutral.500">
+            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </HStack>
+
+        <Box pl="44px">
+          <Text
+            fontSize="md"
+            color="neutral.800"
+            lineHeight="1.7"
+            whiteSpace="pre-wrap"
+          >
+            {message.content}
+          </Text>
+
+          {message.suggestions && message.suggestions.length > 0 && (
+            <VStack align="stretch" spacing={2} mt={6}>
+              <Text fontSize="xs" fontWeight="bold" color="neutral.600" textTransform="uppercase" letterSpacing="wider">
+                Key Takeaways
+              </Text>
+              {message.suggestions.map((suggestion, sidx) => (
+                <Box
+                  key={sidx}
+                  bg="neutral.100"
+                  px={4}
+                  py={3}
+                  borderRadius="6px"
+                  borderLeft="3px solid"
+                  borderLeftColor="neutral.900"
+                >
+                  <Text fontSize="sm" color="neutral.900" fontWeight="medium">
+                    {suggestion}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
+          )}
+        </Box>
+      </Box>
+    )
+  }
+
+  // User message
+  return (
+    <Box>
+      <HStack spacing={3} mb={3} align="center" justify="flex-end">
+        <Text fontSize="xs" color="neutral.500">
+          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </Text>
+        <Text fontSize="sm" fontWeight="bold" color="neutral.900">
+          You
+        </Text>
+        <Box
+          w="32px"
+          h="32px"
+          bg="neutral.600"
+          borderRadius="6px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Text fontSize="sm" fontWeight="bold" color="white">
+            U
+          </Text>
+        </Box>
+      </HStack>
+
+      <Box pr="44px">
+        <Text
+          fontSize="md"
+          color="neutral.800"
+          lineHeight="1.7"
+          textAlign="right"
+        >
+          {message.content}
+        </Text>
       </Box>
     </Box>
   )

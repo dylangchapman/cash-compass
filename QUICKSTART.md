@@ -106,7 +106,7 @@ curl -X POST http://localhost:8000/api/coach \
 
 ## Next Steps
 
-- Customize the transaction data in `data/dylanData.yaml`
+- Customize the transaction data in `data/dylanData.csv`
 - Modify AI prompts in `backend/ai_service.py`
 - Customize the theme in `frontend/src/theme/theme.js`
 - Add new analytics in `backend/analytics.py`

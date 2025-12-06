@@ -38,7 +38,7 @@ class FinancialCoachAI:
         4. Specific, actionable recommendations
         5. Positive reinforcement for good habits
 
-        Keep it friendly, concise, and focused on helping Dylan improve their financial wellness."""
+        Keep it concise and focused on helping Dylan improve their financial wellness."""
 
         try:
             response = self.client.chat.completions.create(
@@ -66,16 +66,14 @@ class FinancialCoachAI:
         ])
 
         user_prompt = f"""Analyze Dylan's progress on these financial goals:
+                            {goals_summary}
+                        For each goal, provide:
+                        1. Assessment of current progress
+                        2. Specific actions to improve or maintain progress
+                        3. Motivation and encouragement
+                        4. Realistic timeline expectations
 
-{goals_summary}
-
-For each goal, provide:
-1. Assessment of current progress
-2. Specific actions to improve or maintain progress
-3. Motivation and encouragement
-4. Realistic timeline expectations
-
-Be supportive but realistic. Focus on actionable steps."""
+                        Be supportive but realistic. Focus on actionable steps."""
 
         try:
             response = self.client.chat.completions.create(

@@ -279,19 +279,19 @@ xl:   1280px+    - Wide desktop
 ## Migration Notes
 
 ### What Changed
-✅ New theme with Stripe-inspired colors
-✅ Top navigation instead of sidebar
-✅ Reusable UI components
-✅ All pages redesigned
-✅ Trust/privacy messaging added
-✅ Professional chart styling
+- New theme with Stripe-inspired colors
+- Top navigation instead of sidebar
+- Reusable UI components
+- All pages redesigned
+- Trust/privacy messaging added
+- Professional chart styling
 
 ### What Stayed the Same
-✅ All API calls and data fetching
-✅ All business logic
-✅ All routing
-✅ All state management
-✅ All functionality
+- All API calls and data fetching
+- All business logic
+- All routing
+- All state management
+- All functionality
 
 ## Usage
 

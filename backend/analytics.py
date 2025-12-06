@@ -38,6 +38,26 @@ class FinancialAnalytics:
             for _, row in recent.iterrows()
         ]
 
+    def get_transactions_by_category(self, category: str, limit: int = 500) -> List[Transaction]:
+        """Get transactions filtered by category"""
+        if self.df.empty:
+            return []
+
+        # Case-insensitive category match
+        filtered = self.df[self.df['category'].str.lower() == category.lower()]
+        recent = filtered.sort_values('date', ascending=False).head(limit)
+        return [
+            Transaction(
+                date=row['date'].strftime('%Y-%m-%d'),
+                merchant=row['merchant'],
+                category=row['category'],
+                amount=float(row['amount']),
+                type=row['type'],
+                notes=row.get('notes', '')
+            )
+            for _, row in recent.iterrows()
+        ]
+
     def get_spending_insights(self) -> AnalyticsSummary:
         """Compute comprehensive spending analytics"""
         if self.df.empty:

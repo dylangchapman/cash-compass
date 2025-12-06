@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
+from pydantic import BaseModel
+import pandas as pd
+import os
+from datetime import datetime
 from models import (
     Transaction, AnalyticsSummary, Subscription,
     GoalStatus, ChatMessage, ChatResponse,
@@ -9,7 +13,26 @@ from models import (
 from analytics import analytics
 from ai_service import ai_service
 from portfolio_service import portfolio_service
+from backtesting_service import backtesting_service
 from config import settings
+
+# Auth models
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class AuthResponse(BaseModel):
+    success: bool
+    message: str
+    user: Optional[dict] = None
+
+# Users CSV path
+USERS_CSV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'users.csv')
 
 app = FastAPI(
     title="Smart Financial Coach API",
@@ -41,6 +64,21 @@ def get_transactions(limit: int = 100):
     try:
         transactions = analytics.get_transactions(limit=limit)
         return transactions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/transactions/category/{category}")
+def get_transactions_by_category(category: str, limit: int = 500):
+    """Get transactions filtered by category"""
+    try:
+        transactions = analytics.get_transactions_by_category(category, limit=limit)
+        category_total = sum(t.amount for t in transactions)
+        return {
+            "transactions": transactions,
+            "total": category_total,
+            "count": len(transactions),
+            "category": category
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -199,6 +237,158 @@ def analyze_net_worth_goal(goal_amount: float):
         analytics_data = analytics.get_spending_insights()
         cash_savings = analytics_data.net_savings
         return portfolio_service.calculate_net_worth_goal_progress(cash_savings, goal_amount)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============== Backtesting Endpoints ==============
+
+@app.get("/api/backtest/presets")
+def get_backtest_presets():
+    """Get available portfolio allocation presets"""
+    try:
+        return backtesting_service.get_preset_allocations()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/backtest/compare")
+def compare_strategies(symbol: str = "SPY", years: int = 5, initial_capital: float = 10000):
+    """Compare buy-and-hold vs SMA crossover strategies for a symbol"""
+    try:
+        return backtesting_service.compare_strategies(symbol, years, initial_capital)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/backtest/allocation")
+def backtest_allocation(preset: str = "60_40", years: int = 5, initial_capital: float = 10000):
+    """Run backtest for a preset portfolio allocation"""
+    try:
+        return backtesting_service.backtest_allocation(preset, years, initial_capital)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class CustomAllocation(BaseModel):
+    allocation: dict
+    years: int = 5
+    initial_capital: float = 10000
+
+@app.post("/api/backtest/custom")
+def backtest_custom_allocation(config: CustomAllocation):
+    """Run backtest for a custom portfolio allocation"""
+    try:
+        result = backtesting_service.run_portfolio_allocation(
+            config.allocation,
+            config.years,
+            config.initial_capital
+        )
+        return {
+            'allocation': config.allocation,
+            'period_years': config.years,
+            'initial_capital': config.initial_capital,
+            'result': {
+                'strategy_name': result.strategy_name,
+                'total_return': result.total_return,
+                'cagr': result.cagr,
+                'sharpe_ratio': result.sharpe_ratio,
+                'sortino_ratio': result.sortino_ratio,
+                'max_drawdown': result.max_drawdown,
+                'volatility': result.volatility,
+                'win_rate': result.win_rate,
+                'total_trades': result.total_trades,
+                'final_value': result.final_value,
+                'equity_curve': result.equity_curve
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============== Authentication Endpoints ==============
+
+@app.post("/api/auth/login", response_model=AuthResponse)
+def login(request: LoginRequest):
+    """Validate user credentials against users.csv"""
+    try:
+        if not os.path.exists(USERS_CSV_PATH):
+            raise HTTPException(status_code=500, detail="Users database not found")
+
+        users_df = pd.read_csv(USERS_CSV_PATH)
+
+        # Find user by email
+        user = users_df[users_df['email'].str.lower() == request.email.lower()]
+
+        if user.empty:
+            return AuthResponse(
+                success=False,
+                message="Invalid email or password"
+            )
+
+        # Check password
+        if user.iloc[0]['password'] != request.password:
+            return AuthResponse(
+                success=False,
+                message="Invalid email or password"
+            )
+
+        # Success
+        return AuthResponse(
+            success=True,
+            message="Login successful",
+            user={
+                "email": user.iloc[0]['email'],
+                "name": user.iloc[0]['name']
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/auth/register", response_model=AuthResponse)
+def register(request: RegisterRequest):
+    """Register a new user account"""
+    try:
+        if not os.path.exists(USERS_CSV_PATH):
+            # Create the file with headers if it doesn't exist
+            users_df = pd.DataFrame(columns=['email', 'password', 'name', 'created_at'])
+        else:
+            users_df = pd.read_csv(USERS_CSV_PATH)
+
+        # Check if email already exists
+        if not users_df.empty and (users_df['email'].str.lower() == request.email.lower()).any():
+            return AuthResponse(
+                success=False,
+                message="An account with this email already exists"
+            )
+
+        # Validate inputs
+        if len(request.password) < 6:
+            return AuthResponse(
+                success=False,
+                message="Password must be at least 6 characters"
+            )
+
+        if not request.name.strip():
+            return AuthResponse(
+                success=False,
+                message="Name is required"
+            )
+
+        # Add new user
+        new_user = pd.DataFrame([{
+            'email': request.email.lower(),
+            'password': request.password,
+            'name': request.name.strip(),
+            'created_at': datetime.now().strftime('%Y-%m-%d')
+        }])
+
+        users_df = pd.concat([users_df, new_user], ignore_index=True)
+        users_df.to_csv(USERS_CSV_PATH, index=False)
+
+        return AuthResponse(
+            success=True,
+            message="Account created successfully",
+            user={
+                "email": request.email.lower(),
+                "name": request.name.strip()
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

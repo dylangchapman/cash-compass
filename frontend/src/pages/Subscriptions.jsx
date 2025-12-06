@@ -10,13 +10,11 @@ import {
   VStack,
   HStack,
   Icon,
+  Container,
+  Flex,
 } from '@chakra-ui/react'
-import { Card, CardHeader, CardBody } from '@chakra-ui/react'
-import { MdWarning, MdLightbulb, MdCheckCircle } from 'react-icons/md'
+import { MdWarning, MdInsights, MdCheckCircle } from 'react-icons/md'
 import { financialAPI } from '../services/api'
-import PageHeader from '../components/layout/PageHeader'
-import Section from '../components/ui/Section'
-import MetricCard from '../components/ui/MetricCard'
 import StatusBadge from '../components/ui/StatusBadge'
 
 export default function Subscriptions() {
@@ -42,15 +40,15 @@ export default function Subscriptions() {
 
   if (loading) {
     return (
-      <Center h="400px">
-        <Spinner size="xl" color="primary.500" thickness="3px" />
+      <Center h="100vh">
+        <Spinner size="xl" color="neutral.900" thickness="3px" />
       </Center>
     )
   }
 
   if (error) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error" borderRadius="8px">
         <AlertIcon />
         Error loading subscriptions: {error}
       </Alert>
@@ -62,175 +60,271 @@ export default function Subscriptions() {
   const grayCharges = subscriptions.filter(sub => sub.is_gray_charge)
 
   return (
-    <Box>
-      <PageHeader
-        title="Subscription Manager"
-        description="Track and manage all your recurring charges in one place"
-      />
-
-      {/* Summary Metrics */}
-      <Section>
-        <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={6}>
-          <MetricCard
-            label="Active Subscriptions"
-            value={subscriptions.length}
-            change="Detected recurring charges"
-          />
-
-          <MetricCard
-            label="Monthly Cost"
-            value={`$${data?.total_monthly?.toFixed(2)}`}
-            valueColor="error.600"
-            change="Total per month"
-          />
-
-          <MetricCard
-            label="Potential Issues"
-            value={data?.gray_charges_detected || 0}
-            valueColor={grayCharges.length > 0 ? 'warning.600' : 'success.600'}
-            change={grayCharges.length > 0 ? 'Review recommended' : 'All clear'}
-            icon={grayCharges.length > 0 ? MdWarning : MdCheckCircle}
-          />
-        </Grid>
-      </Section>
-
-      {/* AI Insights */}
-      <Section>
-        <Card
-          bg="primary.50"
-          borderColor="primary.200"
-          borderWidth="1px"
-        >
-          <CardHeader borderBottom="1px solid" borderColor="primary.200" pb={4}>
-            <HStack>
-              <Icon as={MdLightbulb} boxSize={5} color="primary.600" />
-              <Text fontSize="md" fontWeight="semibold" color="primary.900">
-                Subscription Analysis
+    <Box bg="white" minH="100vh">
+      {/* HERO SECTION */}
+      <Box bg="neutral.900" color="white" pt={32} pb={40}>
+        <Container maxW="1400px">
+          <VStack align="start" spacing={12}>
+            <Box>
+              <Text
+                fontSize={{ base: '4xl', md: '5xl', lg: '6xl' }}
+                fontWeight="black"
+                letterSpacing="tighter"
+                lineHeight="tighter"
+                mb={6}
+              >
+                Subscription Manager
               </Text>
-            </HStack>
-          </CardHeader>
-          <CardBody pt={6}>
-            <Text
-              whiteSpace="pre-wrap"
-              lineHeight="tall"
-              color="primary.900"
-              fontSize="md"
-            >
-              {aiInsights}
-            </Text>
-          </CardBody>
-        </Card>
-      </Section>
+              <Text fontSize="xl" color="neutral.400" fontWeight="normal" maxW="700px">
+                Track and optimize all your recurring charges in one place
+              </Text>
+            </Box>
 
-      {/* Gray Charges Warning */}
-      {grayCharges.length > 0 && (
-        <Alert
-          status="warning"
-          borderRadius="md"
-          mb={8}
-          py={4}
-        >
-          <AlertIcon />
-          <Box>
-            <Text fontWeight="semibold" mb={1}>
-              Potential Gray Charges Detected
-            </Text>
-            <Text fontSize="sm">
-              We found {grayCharges.length} subscription(s) that may be unwanted or forgotten charges. Review them carefully below.
-            </Text>
-          </Box>
-        </Alert>
+            {/* Key metrics grid */}
+            <Grid
+              templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+              gap={12}
+              w="full"
+              pt={8}
+              borderTop="1px solid"
+              borderColor="neutral.700"
+            >
+              <MetricBlock
+                label="Active Subscriptions"
+                value={subscriptions.length}
+                sublabel="Detected recurring charges"
+              />
+              <MetricBlock
+                label="Monthly Cost"
+                value={`$${data?.total_monthly?.toFixed(2)}`}
+                sublabel="Total per month"
+              />
+              <MetricBlock
+                label="Potential Issues"
+                value={data?.gray_charges_detected || 0}
+                sublabel={grayCharges.length > 0 ? 'Review recommended' : 'All clear'}
+                icon={grayCharges.length > 0 ? MdWarning : MdCheckCircle}
+                iconColor={grayCharges.length > 0 ? 'warning.400' : 'success.400'}
+              />
+            </Grid>
+          </VStack>
+        </Container>
+      </Box>
+
+      {/* AI INSIGHTS */}
+      {aiInsights && (
+        <Box py={24} bg="white">
+          <Container maxW="1400px">
+            <Box
+              bg="white"
+              border="2px solid"
+              borderColor="neutral.900"
+              borderRadius="8px"
+              overflow="hidden"
+            >
+              <Box bg="neutral.900" color="white" p={6}>
+                <HStack spacing={3}>
+                  <Icon as={MdInsights} boxSize={6} />
+                  <Text fontSize="lg" fontWeight="bold">
+                    Analysis & Recommendations
+                  </Text>
+                </HStack>
+              </Box>
+              <Box p={8}>
+                <Text
+                  whiteSpace="pre-wrap"
+                  lineHeight="1.8"
+                  color="neutral.800"
+                  fontSize="md"
+                >
+                  {aiInsights}
+                </Text>
+              </Box>
+            </Box>
+          </Container>
+        </Box>
       )}
 
-      {/* Subscriptions List */}
-      <Section title="Your Subscriptions" description="All recurring charges detected in your transactions">
-        <Grid gap={4}>
-          {subscriptions.map((sub, idx) => (
-            <Card
-              key={idx}
-              borderLeft="4px solid"
-              borderLeftColor={sub.is_gray_charge ? 'warning.600' : 'primary.500'}
-              bg={sub.is_gray_charge ? 'warning.100' : 'white'}
+      {/* GRAY CHARGES WARNING */}
+      {grayCharges.length > 0 && (
+        <Box py={24} bg="warning.50" borderTop="2px solid" borderColor="warning.200">
+          <Container maxW="1400px">
+            <Box
+              bg="white"
+              border="2px solid"
+              borderColor="warning.600"
+              borderRadius="8px"
+              p={8}
             >
-              <CardBody p={5}>
-                <HStack justify="space-between" mb={4}>
-                  <VStack align="start" spacing={2}>
-                    <HStack spacing={3}>
-                      <Text fontWeight="semibold" fontSize="lg" color="black">
-                        {sub.merchant}
+              <HStack spacing={4} mb={4}>
+                <Icon as={MdWarning} boxSize={8} color="warning.600" />
+                <Box>
+                  <Text fontSize="2xl" fontWeight="black" color="neutral.900" mb={1}>
+                    Potential Gray Charges Detected
+                  </Text>
+                  <Text fontSize="md" color="neutral.700">
+                    We found {grayCharges.length} subscription(s) that may be unwanted or forgotten charges
+                  </Text>
+                </Box>
+              </HStack>
+            </Box>
+          </Container>
+        </Box>
+      )}
+
+      {/* SUBSCRIPTIONS LIST */}
+      <Box py={24} bg={grayCharges.length > 0 ? 'white' : 'neutral.50'}>
+        <Container maxW="1400px">
+          <Box mb={12}>
+            <Text fontSize="4xl" fontWeight="black" color="neutral.900" letterSpacing="tighter" mb={3}>
+              Your subscriptions
+            </Text>
+            <Text fontSize="lg" color="neutral.600">
+              All recurring charges detected in your transactions
+            </Text>
+          </Box>
+
+          <Grid gap={4}>
+            {subscriptions.map((sub, idx) => (
+              <Box
+                key={idx}
+                bg="white"
+                border="2px solid"
+                borderColor={sub.is_gray_charge ? 'warning.600' : 'neutral.200'}
+                borderRadius="8px"
+                overflow="hidden"
+                transition="all 0.2s"
+                _hover={{
+                  borderColor: sub.is_gray_charge ? 'warning.700' : 'neutral.400',
+                  transform: 'translateY(-2px)',
+                }}
+              >
+                {/* Header with merchant and badges */}
+                <Box
+                  bg={sub.is_gray_charge ? 'warning.100' : 'neutral.50'}
+                  p={6}
+                  borderBottom="2px solid"
+                  borderColor={sub.is_gray_charge ? 'warning.600' : 'neutral.200'}
+                >
+                  <Flex justify="space-between" align="center">
+                    <Box flex={1}>
+                      <HStack spacing={3} mb={2}>
+                        <Text fontSize="xl" fontWeight="bold" color="neutral.900">
+                          {sub.merchant}
+                        </Text>
+                        {sub.is_gray_charge && (
+                          <StatusBadge status="warning">Potential Gray Charge</StatusBadge>
+                        )}
+                        <StatusBadge status={sub.confidence === 'high' ? 'success' : 'neutral'}>
+                          {sub.confidence} confidence
+                        </StatusBadge>
+                      </HStack>
+                      <Text fontSize="sm" color="neutral.600" textTransform="capitalize" fontWeight="medium">
+                        {sub.frequency} billing
                       </Text>
-                      {sub.is_gray_charge && (
-                        <StatusBadge status="warning">Potential Gray Charge</StatusBadge>
-                      )}
-                      <StatusBadge status={sub.confidence === 'high' ? 'success' : 'neutral'}>
-                        {sub.confidence} confidence
-                      </StatusBadge>
-                    </HStack>
+                    </Box>
 
-                    <Text fontSize="sm" color="neutral.700" textTransform="capitalize" fontWeight="medium">
-                      {sub.frequency} billing
-                    </Text>
-                  </VStack>
+                    <Box textAlign="right">
+                      <Text fontSize="4xl" fontWeight="black" color="neutral.900" letterSpacing="tighter">
+                        ${sub.amount?.toFixed(2)}
+                      </Text>
+                      <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+                        per {sub.frequency === 'monthly' ? 'month' : 'charge'}
+                      </Text>
+                    </Box>
+                  </Flex>
+                </Box>
 
-                  <VStack align="end" spacing={0}>
-                    <Text fontSize="3xl" fontWeight="semibold" color="neutral.900" letterSpacing="tight">
-                      ${sub.amount?.toFixed(2)}
-                    </Text>
-                    <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide">
-                      per {sub.frequency === 'monthly' ? 'month' : 'charge'}
-                    </Text>
-                  </VStack>
-                </HStack>
+                {/* Details */}
+                <Box p={6}>
+                  <Grid templateColumns="repeat(3, 1fr)" gap={8}>
+                    <Box>
+                      <Text fontSize="xs" color="neutral.500" mb={2} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+                        Last Charged
+                      </Text>
+                      <Text fontSize="md" fontWeight="semibold" color="neutral.900">
+                        {sub.last_charge}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="neutral.500" mb={2} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+                        Monthly Cost
+                      </Text>
+                      <Text fontSize="md" fontWeight="semibold" color="neutral.900">
+                        ${sub.frequency === 'monthly' ? sub.amount?.toFixed(2) : (sub.amount * 12)?.toFixed(2)}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="neutral.500" mb={2} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+                        YTD Total
+                      </Text>
+                      <Text fontSize="md" fontWeight="semibold" color="neutral.900">
+                        ${sub.total_spent?.toFixed(2)}
+                      </Text>
+                    </Box>
+                  </Grid>
+                </Box>
+              </Box>
+            ))}
 
-                <Grid templateColumns="repeat(3, 1fr)" gap={6} pt={4} borderTop="1px solid" borderColor="neutral.200">
-                  <Box>
-                    <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
-                      Last Charged
-                    </Text>
-                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
-                      {sub.last_charge}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
-                      Monthly Cost
-                    </Text>
-                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
-                      ${sub.frequency === 'monthly' ? sub.amount?.toFixed(2) : (sub.amount * 12)?.toFixed(2)}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color="neutral.500" mb={1} textTransform="uppercase" letterSpacing="wide">
-                      YTD Total
-                    </Text>
-                    <Text fontSize="sm" fontWeight="medium" color="neutral.900">
-                      ${sub.total_spent?.toFixed(2)}
-                    </Text>
-                  </Box>
-                </Grid>
-              </CardBody>
-            </Card>
-          ))}
+            {subscriptions.length === 0 && (
+              <Box
+                py={20}
+                textAlign="center"
+                border="2px dashed"
+                borderColor="neutral.300"
+                borderRadius="8px"
+              >
+                <Icon as={MdCheckCircle} boxSize={16} color="neutral.300" mb={4} />
+                <Text color="neutral.600" fontWeight="semibold" fontSize="lg" mb={2}>
+                  No recurring subscriptions detected
+                </Text>
+                <Text color="neutral.500" fontSize="sm">
+                  We'll notify you if any recurring charges appear
+                </Text>
+              </Box>
+            )}
+          </Grid>
+        </Container>
+      </Box>
+    </Box>
+  )
+}
 
-          {subscriptions.length === 0 && (
-            <Card>
-              <CardBody py={12}>
-                <Center>
-                  <VStack spacing={2}>
-                    <Icon as={MdCheckCircle} boxSize={12} color="neutral.300" />
-                    <Text color="neutral.500" fontWeight="medium">
-                      No recurring subscriptions detected
-                    </Text>
-                    <Text color="neutral.400" fontSize="sm">
-                      We'll notify you if any recurring charges appear
-                    </Text>
-                  </VStack>
-                </Center>
-              </CardBody>
-            </Card>
-          )}
-        </Grid>
-      </Section>
+// Metric Block Component
+function MetricBlock({ label, value, sublabel, icon, iconColor }) {
+  return (
+    <Box>
+      <Text
+        fontSize="xs"
+        fontWeight="semibold"
+        textTransform="uppercase"
+        letterSpacing="wider"
+        color="neutral.500"
+        mb={3}
+      >
+        {label}
+      </Text>
+      <HStack spacing={3} align="baseline">
+        <Text
+          fontSize={{ base: '3xl', md: '4xl' }}
+          fontWeight="black"
+          letterSpacing="tighter"
+          lineHeight="none"
+        >
+          {value}
+        </Text>
+        {icon && (
+          <Icon
+            as={icon}
+            boxSize={8}
+            color={iconColor}
+          />
+        )}
+      </HStack>
+      <Text fontSize="sm" color="neutral.400" mt={2} fontWeight="medium">
+        {sublabel}
+      </Text>
     </Box>
   )
 }

@@ -206,11 +206,11 @@ class PortfolioService:
     def _get_milestone_label(self, percent: int) -> str:
         """Get encouraging milestone labels"""
         labels = {
-            25: "🌱 Quarter Way There!",
-            50: "🎯 Halfway Milestone!",
-            75: "🚀 Three Quarters Complete!",
-            90: "⭐ Almost There!",
-            100: "🎉 Goal Achieved!"
+            25: "Quarter Way There!",
+            50: "Halfway Milestone!",
+            75: "Three Quarters Complete!",
+            90: "Almost There!",
+            100: "Goal Achieved!"
         }
         return labels.get(percent, f"{percent}% Complete")
 
