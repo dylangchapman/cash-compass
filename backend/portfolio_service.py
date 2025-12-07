@@ -14,7 +14,6 @@ class PortfolioService:
         self.update_prices()
 
     def load_portfolio(self):
-        """Load portfolio from CSV"""
         try:
             self.df = pd.read_csv(self.portfolio_path)
             self.df['purchase_date'] = pd.to_datetime(self.df['purchase_date'])
@@ -23,7 +22,7 @@ class PortfolioService:
             self.df = pd.DataFrame()
 
     def update_prices(self):
-        """Fetch current prices from yfinance"""
+        """ get current prices from yfinance"""
         if self.df.empty:
             return
 
@@ -65,7 +64,7 @@ class PortfolioService:
             print(f"Error updating prices: {e}")
 
     def get_portfolio_summary(self) -> Dict:
-        """Calculate portfolio value and returns"""
+        """ get portfolio and return values """
         if self.df.empty:
             return self._empty_summary()
 
@@ -169,13 +168,8 @@ class PortfolioService:
         remaining = max(0, goal_amount - current)
 
         # Calculate months to goal based on average savings rate
-        # This could be enhanced with actual savings data
         monthly_savings_estimate = cash_savings / 6  # Rough estimate from 6 months data
         months_to_goal = (remaining / monthly_savings_estimate) if monthly_savings_estimate > 0 else 0
-
-        # Motivational milestones
-        milestones = self._get_milestones(goal_amount)
-        next_milestone = next((m for m in milestones if m['amount'] > current), None)
 
         return {
             'current_net_worth': float(current),
@@ -183,36 +177,8 @@ class PortfolioService:
             'progress_percent': float(progress_percent),
             'remaining': float(remaining),
             'months_to_goal': float(months_to_goal),
-            'on_track': progress_percent >= 50,  # Simple heuristic
-            'next_milestone': next_milestone,
-            'milestones_achieved': [m for m in milestones if m['amount'] <= current]
+            'on_track': progress_percent >= 50
         }
-
-    def _get_milestones(self, goal_amount: float) -> List[Dict]:
-        """Generate motivational milestones"""
-        milestones = []
-        percentages = [25, 50, 75, 90, 100]
-
-        for pct in percentages:
-            amount = goal_amount * (pct / 100)
-            milestones.append({
-                'percent': pct,
-                'amount': float(amount),
-                'label': self._get_milestone_label(pct)
-            })
-
-        return milestones
-
-    def _get_milestone_label(self, percent: int) -> str:
-        """Get encouraging milestone labels"""
-        labels = {
-            25: "Quarter Way There!",
-            50: "Halfway Milestone!",
-            75: "Three Quarters Complete!",
-            90: "Almost There!",
-            100: "Goal Achieved!"
-        }
-        return labels.get(percent, f"{percent}% Complete")
 
     def _empty_summary(self) -> Dict:
         """Return empty summary when no portfolio"""

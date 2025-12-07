@@ -7,10 +7,6 @@ from models import (
 )
 from config import settings
 
-# ============================================================================
-# HEURISTIC SCORING CONSTANTS - Easy to tweak
-# ============================================================================
-
 # Subscription scoring weights
 SUB_MIN_TXNS = 3
 SUB_MONTHLY_INTERVAL_RANGE = (27, 33)
@@ -262,10 +258,6 @@ class FinancialAnalytics:
                 })
 
         return sorted(anomalies, key=lambda x: x['amount'], reverse=True)
-
-    # ========================================================================
-    # HEURISTIC SCORING SYSTEM
-    # ========================================================================
 
     def compute_merchant_features(self) -> pd.DataFrame:
         """Compute per-merchant features for subscription detection"""
@@ -592,7 +584,7 @@ class FinancialAnalytics:
         }
 
     def calculate_goal_status(self, goal_name: str, target: float, category: str = None) -> Dict:
-        """Calculate progress toward a financial goal"""
+        """ calculate goal status"""
         if self.df.empty:
             return {}
 
@@ -633,7 +625,7 @@ class FinancialAnalytics:
         }
 
     def get_income_breakdown(self) -> Dict:
-        """Get breakdown of income sources"""
+        """ breakdown income sources """
         if self.df.empty:
             return {"sources": [], "total": 0, "monthly_avg": 0}
 
@@ -641,7 +633,7 @@ class FinancialAnalytics:
         if income_df.empty:
             return {"sources": [], "total": 0, "monthly_avg": 0}
 
-        # Group by merchant (income source)
+        # Group by merchant
         source_totals = income_df.groupby('merchant')['amount'].agg(['sum', 'count', 'mean']).reset_index()
         source_totals.columns = ['source', 'total', 'count', 'avg_amount']
 
@@ -726,7 +718,7 @@ class FinancialAnalytics:
         }
 
     def _empty_summary(self) -> AnalyticsSummary:
-        """Return empty summary when no data"""
+        """ return empty summary when no data"""
         return AnalyticsSummary(
             total_income=0,
             total_expenses=0,

@@ -137,8 +137,6 @@ class NetWorthGoalProgress(BaseModel):
     remaining: float
     months_to_goal: float
     on_track: bool
-    next_milestone: Optional[dict] = None
-    milestones_achieved: List[dict]
 
 
 # Time Machine Models

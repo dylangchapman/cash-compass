@@ -606,17 +606,17 @@ export default function Dashboard() {
             {/* Milestone Progress Indicators */}
             <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }} gap={4} mt={8}>
               {[25, 50, 75, 90, 100].map((pct) => {
-                const achieved = netWorthProgress?.milestones_achieved?.some(m => m.percent === pct)
-                const isCurrent = netWorthProgress?.next_milestone?.percent === pct
+                const progressPct = netWorthProgress?.progress_percent || 0
+                const achieved = progressPct >= pct
                 const milestoneAmount = (currentNetWorthGoal * pct) / 100
 
                 return (
                   <Box
                     key={pct}
                     p={4}
-                    bg={achieved ? 'neutral.900' : isCurrent ? 'neutral.100' : 'white'}
+                    bg={achieved ? 'neutral.900' : 'white'}
                     border="2px solid"
-                    borderColor={achieved ? 'neutral.900' : isCurrent ? 'neutral.400' : 'neutral.200'}
+                    borderColor={achieved ? 'neutral.900' : 'neutral.200'}
                     borderRadius="8px"
                     textAlign="center"
                     transition="all 0.2s"
@@ -624,15 +624,12 @@ export default function Dashboard() {
                     {achieved ? (
                       <Icon as={MdCheckCircle} boxSize={8} color="white" mb={2} />
                     ) : (
-                      <Text fontSize="2xl" fontWeight="black" color={isCurrent ? 'neutral.900' : 'neutral.400'} mb={2}>
+                      <Text fontSize="2xl" fontWeight="black" color="neutral.400" mb={2}>
                         {pct}%
                       </Text>
                     )}
                     <Text fontSize="sm" fontWeight="bold" color={achieved ? 'white' : 'neutral.700'}>
                       ${milestoneAmount.toLocaleString()}
-                    </Text>
-                    <Text fontSize="xs" color={achieved ? 'neutral.400' : 'neutral.500'} mt={1}>
-                      {achieved ? 'Achieved' : isCurrent ? 'Next Goal' : 'Upcoming'}
                     </Text>
                   </Box>
                 )

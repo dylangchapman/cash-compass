@@ -121,7 +121,7 @@ export default function Subscriptions() {
                 sublabel={grayCharges.length > 0 ? 'Review recommended' : 'All clear'}
                 icon={grayCharges.length > 0 ? MdWarning : MdCheckCircle}
                 iconColor={grayCharges.length > 0 ? 'warning.400' : 'success.400'}
-                tooltip="Gray charges are recurring payments you may have forgotten about or no longer use—like free trials that converted to paid, unused memberships, or services you signed up for once and forgot."
+                tooltip="Gray charges are recurring payments you may have forgotten about or no longer use, like free trials that converted to paid, unused memberships, or services you signed up for once and forgot."
               />
             </Grid>
           </VStack>
@@ -181,7 +181,7 @@ export default function Subscriptions() {
                       Potential Gray Charges Detected
                     </Text>
                     <Tooltip
-                      label="Gray charges are sneaky recurring fees that often go unnoticed—expired free trials, forgotten memberships, or duplicate services. We flag these based on keywords in your transaction notes like 'trial', 'protection plan', or 'suspicious'."
+                      label="Gray charges are sneaky recurring fees that often go unnoticed, like free trials, forgotten memberships, or duplicate services."
                       placement="top"
                       hasArrow
                       bg="neutral.900"

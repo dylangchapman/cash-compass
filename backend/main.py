@@ -271,8 +271,6 @@ def analyze_net_worth_goal(goal_amount: float):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============== Backtesting Endpoints ==============
-
 @app.get("/api/backtest/presets")
 def get_backtest_presets():
     """Get available portfolio allocation presets"""
@@ -332,7 +330,6 @@ def backtest_custom_allocation(config: CustomAllocation):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============== Time Machine Endpoints ==============
 
 @app.get("/api/time-machine/baseline")
 def get_time_machine_baseline():
@@ -545,9 +542,6 @@ def project_time_machine(scenario: TimeMachineScenario):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============== Authentication Endpoints ==============
 
 @app.post("/api/auth/login", response_model=AuthResponse)
 def login(request: LoginRequest):

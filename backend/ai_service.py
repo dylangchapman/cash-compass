@@ -204,13 +204,11 @@ class FinancialCoachAI:
                         Do not use bullet points or lists. Write in flowing prose."""
 
         user_prompt = f"""Portfolio allocation:
-- Stocks: {stocks_pct:.1f}%
-- ETFs: {etfs_pct:.1f}%
-- Bonds: {bonds_pct:.1f}%
-
-Top holdings: {holdings_summary}
-
-Provide a 2-3 sentence insight about this allocation's risk profile and one specific observation."""
+                        - Stocks: {stocks_pct:.1f}%
+                        - ETFs: {etfs_pct:.1f}%
+                        - Bonds: {bonds_pct:.1f}%
+                        Top holdings: {holdings_summary}
+                        Provide a 2-3 sentence insight about this allocation's risk profile and one specific observation."""
 
         try:
             response = self.client.chat.completions.create(
