@@ -644,307 +644,269 @@ export default function TimeMachine() {
             </Text>
           </Box>
 
-          <Grid templateColumns={{ base: '1fr', lg: '400px 1fr' }} gap={8}>
-            {/* Calculator Inputs */}
+          {/* Inputs and Key Results Row */}
+          <Grid templateColumns={{ base: '1fr', lg: 'repeat(4, 1fr)' }} gap={4} mb={6}>
+            {/* Calculator Inputs - Compact */}
             <Box
               bg="white"
               border="2px solid"
               borderColor="neutral.200"
               borderRadius="8px"
-              p={6}
+              p={5}
             >
-              <VStack spacing={6} align="stretch">
+              <Text fontSize="sm" fontWeight="bold" color="neutral.600" textTransform="uppercase" letterSpacing="wide" mb={4}>
+                Your Info
+              </Text>
+              <VStack spacing={4} align="stretch">
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
                     Current Age: {currentAge}
                   </FormLabel>
-                  <Slider
-                    value={currentAge}
-                    onChange={setCurrentAge}
-                    min={18}
-                    max={70}
-                    step={1}
-                  >
-                    <SliderTrack bg="neutral.200">
+                  <Slider value={currentAge} onChange={setCurrentAge} min={18} max={70} step={1} size="sm">
+                    <SliderTrack bg="neutral.200" h="6px">
                       <SliderFilledTrack bg="neutral.900" />
                     </SliderTrack>
-                    <SliderThumb boxSize={5} />
+                    <SliderThumb boxSize={4} />
                   </Slider>
                 </FormControl>
-
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
                     Retirement Age: {retirementAge}
                   </FormLabel>
-                  <Slider
-                    value={retirementAge}
-                    onChange={setRetirementAge}
-                    min={currentAge + 1}
-                    max={80}
-                    step={1}
-                  >
-                    <SliderTrack bg="neutral.200">
+                  <Slider value={retirementAge} onChange={setRetirementAge} min={currentAge + 1} max={80} step={1} size="sm">
+                    <SliderTrack bg="neutral.200" h="6px">
                       <SliderFilledTrack bg="neutral.900" />
                     </SliderTrack>
-                    <SliderThumb boxSize={5} />
+                    <SliderThumb boxSize={4} />
                   </Slider>
                 </FormControl>
-
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
                     Current Savings
                   </FormLabel>
                   <Input
                     type="number"
                     value={currentSavings}
                     onChange={(e) => setCurrentSavings(Number(e.target.value) || 0)}
-                    bg="white"
-                    color="neutral.900"
+                    size="sm"
+                    bg="neutral.50"
                   />
                 </FormControl>
-
                 <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
                     Monthly Contribution
                   </FormLabel>
                   <Input
                     type="number"
                     value={retirementMonthlyContribution}
                     onChange={(e) => setRetirementMonthlyContribution(Number(e.target.value) || 0)}
-                    bg="white"
-                    color="neutral.900"
+                    size="sm"
+                    bg="neutral.50"
                   />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
-                    Expected Annual Return: {expectedReturn}%
-                  </FormLabel>
-                  <Slider
-                    value={expectedReturn}
-                    onChange={setExpectedReturn}
-                    min={1}
-                    max={12}
-                    step={0.5}
-                  >
-                    <SliderTrack bg="neutral.200">
-                      <SliderFilledTrack bg="success.500" />
-                    </SliderTrack>
-                    <SliderThumb boxSize={5} />
-                  </Slider>
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="bold" color="neutral.700">
-                    Expected Inflation: {inflationRate}%
-                  </FormLabel>
-                  <Slider
-                    value={inflationRate}
-                    onChange={setInflationRate}
-                    min={1}
-                    max={8}
-                    step={0.5}
-                  >
-                    <SliderTrack bg="neutral.200">
-                      <SliderFilledTrack bg="error.500" />
-                    </SliderTrack>
-                    <SliderThumb boxSize={5} />
-                  </Slider>
                 </FormControl>
               </VStack>
             </Box>
 
-            {/* Results & Chart */}
-            <VStack spacing={6} align="stretch">
-              {/* Key Results */}
-              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={4}>
-                <Box
-                  bg="neutral.900"
-                  color="white"
-                  p={6}
-                  borderRadius="8px"
-                >
-                  <Text fontSize="xs" color="neutral.400" textTransform="uppercase" fontWeight="bold" mb={2}>
-                    Projected Balance at {retirementAge}
+            {/* Rates Inputs */}
+            <Box
+              bg="white"
+              border="2px solid"
+              borderColor="neutral.200"
+              borderRadius="8px"
+              p={5}
+            >
+              <Text fontSize="sm" fontWeight="bold" color="neutral.600" textTransform="uppercase" letterSpacing="wide" mb={4}>
+                Assumptions
+              </Text>
+              <VStack spacing={4} align="stretch">
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
+                    Expected Return: {expectedReturn}%
+                  </FormLabel>
+                  <Slider value={expectedReturn} onChange={setExpectedReturn} min={1} max={12} step={0.5} size="sm">
+                    <SliderTrack bg="neutral.200" h="6px">
+                      <SliderFilledTrack bg="success.500" />
+                    </SliderTrack>
+                    <SliderThumb boxSize={4} />
+                  </Slider>
+                </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="bold" color="neutral.700" mb={1}>
+                    Inflation Rate: {inflationRate}%
+                  </FormLabel>
+                  <Slider value={inflationRate} onChange={setInflationRate} min={1} max={8} step={0.5} size="sm">
+                    <SliderTrack bg="neutral.200" h="6px">
+                      <SliderFilledTrack bg="error.500" />
+                    </SliderTrack>
+                    <SliderThumb boxSize={4} />
+                  </Slider>
+                </FormControl>
+                <Box pt={2}>
+                  <Text fontSize="xs" color="neutral.500" mb={1}>Real Return (after inflation)</Text>
+                  <Text fontSize="2xl" fontWeight="black" color={realReturnRate > 0 ? 'success.600' : 'error.600'}>
+                    {realReturnRate.toFixed(1)}%
                   </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="xs" color="neutral.500" mb={1}>Years to Retirement</Text>
+                  <Text fontSize="2xl" fontWeight="black" color="neutral.900">
+                    {yearsToRetirement}
+                  </Text>
+                </Box>
+              </VStack>
+            </Box>
+
+            {/* Projected Balance */}
+            <Box bg="neutral.900" color="white" p={5} borderRadius="8px">
+              <Text fontSize="sm" fontWeight="bold" color="neutral.400" textTransform="uppercase" letterSpacing="wide" mb={4}>
+                At Age {retirementAge}
+              </Text>
+              <VStack align="stretch" spacing={4}>
+                <Box>
+                  <Text fontSize="xs" color="neutral.400" mb={1}>Projected Balance</Text>
                   <Text fontSize="3xl" fontWeight="black" letterSpacing="tight">
                     ${finalBalance.toLocaleString()}
                   </Text>
-                  <HStack mt={2} spacing={4}>
-                    <Text fontSize="sm" color="neutral.400">
-                      Contributions: ${totalContributions.toLocaleString()}
-                    </Text>
-                  </HStack>
                 </Box>
-
-                <Box
-                  bg="success.500"
-                  color="white"
-                  p={6}
-                  borderRadius="8px"
-                >
-                  <Text fontSize="xs" color="success.100" textTransform="uppercase" fontWeight="bold" mb={2}>
-                    Interest Earned (Compound Growth)
+                <Box>
+                  <Text fontSize="xs" color="neutral.400" mb={1}>Your Contributions</Text>
+                  <Text fontSize="xl" fontWeight="bold">
+                    ${totalContributions.toLocaleString()}
                   </Text>
-                  <Text fontSize="3xl" fontWeight="black" letterSpacing="tight">
-                    ${totalInterest.toLocaleString()}
+                </Box>
+                <Box>
+                  <Text fontSize="xs" color="neutral.400" mb={1}>Interest Earned</Text>
+                  <Text fontSize="xl" fontWeight="bold" color="success.400">
+                    +${totalInterest.toLocaleString()}
                   </Text>
-                  <Text fontSize="sm" color="success.100" mt={2}>
+                  <Text fontSize="xs" color="neutral.500">
                     {totalContributions > 0 ? ((totalInterest / totalContributions) * 100).toFixed(0) : 0}% return on contributions
                   </Text>
                 </Box>
-              </Grid>
+              </VStack>
+            </Box>
 
-              {/* Inflation Warning */}
-              <Box
-                bg="warning.50"
-                border="2px solid"
-                borderColor="warning.400"
-                borderRadius="8px"
-                p={6}
-              >
-                <HStack spacing={3} mb={3}>
-                  <Icon as={MdWarning} boxSize={6} color="warning.600" />
-                  <Text fontWeight="bold" color="warning.700" fontSize="lg">
-                    The Hidden Cost of Inflation
+            {/* Inflation Impact */}
+            <Box bg="warning.50" border="2px solid" borderColor="warning.400" p={5} borderRadius="8px">
+              <Text fontSize="sm" fontWeight="bold" color="warning.700" textTransform="uppercase" letterSpacing="wide" mb={4}>
+                Inflation Impact
+              </Text>
+              <VStack align="stretch" spacing={4}>
+                <Box>
+                  <Text fontSize="xs" color="warning.600" mb={1}>Today's Purchasing Power</Text>
+                  <Text fontSize="2xl" fontWeight="black" color="warning.700">
+                    ${Math.round(inflationAdjustedValue).toLocaleString()}
                   </Text>
-                </HStack>
-                <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={4}>
-                  <Box>
-                    <Text fontSize="xs" color="warning.600" textTransform="uppercase" fontWeight="bold" mb={1}>
-                      Today's Purchasing Power
-                    </Text>
-                    <Text fontSize="2xl" fontWeight="black" color="warning.700">
-                      ${Math.round(inflationAdjustedValue).toLocaleString()}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color="warning.600" textTransform="uppercase" fontWeight="bold" mb={1}>
-                      Lost to Inflation
-                    </Text>
-                    <Text fontSize="2xl" fontWeight="black" color="error.600">
-                      -${Math.round(purchasingPowerLoss).toLocaleString()}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color="warning.600" textTransform="uppercase" fontWeight="bold" mb={1}>
-                      Real Return Rate
-                    </Text>
-                    <Text fontSize="2xl" fontWeight="black" color={realReturnRate > 0 ? 'success.600' : 'error.600'}>
-                      {realReturnRate.toFixed(1)}%
-                    </Text>
-                  </Box>
-                </Grid>
-                <Divider my={4} borderColor="warning.300" />
-                <Text fontSize="sm" color="warning.700" lineHeight="tall">
-                  <strong>Why this matters:</strong> At {inflationRate}% annual inflation, your ${finalBalance.toLocaleString()} will only buy what ${Math.round(inflationAdjustedValue).toLocaleString()} buys today.
-                  This is why investing is crucial - keeping money in a savings account (0.5% APY) means losing purchasing power every year.
-                  Your real return after inflation is only {realReturnRate.toFixed(1)}%, not {expectedReturn}%.
-                </Text>
-              </Box>
-
-              {/* Growth Chart */}
-              <Box
-                bg="white"
-                border="2px solid"
-                borderColor="neutral.200"
-                borderRadius="8px"
-                p={6}
-              >
-                <HStack spacing={3} mb={4}>
-                  <Icon as={MdShowChart} boxSize={5} color="neutral.700" />
-                  <Text fontWeight="bold" color="neutral.900">
-                    Growth Over Time - The Power of Compound Interest
+                </Box>
+                <Box>
+                  <Text fontSize="xs" color="warning.600" mb={1}>Lost to Inflation</Text>
+                  <Text fontSize="xl" fontWeight="bold" color="error.600">
+                    -${Math.round(purchasingPowerLoss).toLocaleString()}
                   </Text>
-                </HStack>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={retirementData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                    <XAxis
-                      dataKey="year"
-                      tick={{ fill: '#18181b', fontSize: 12 }}
-                      tickFormatter={(value) => `Year ${value}`}
-                    />
-                    <YAxis
-                      tick={{ fill: '#18181b', fontSize: 12 }}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#18181b',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '12px',
-                      }}
-                      formatter={(value, name) => {
-                        const labels = {
-                          balance: 'Total Balance',
-                          contributions: 'Your Contributions',
-                          interest: 'Compound Interest',
-                        }
-                        return [`$${value.toLocaleString()}`, labels[name] || name]
-                      }}
-                      labelFormatter={(label) => `Year ${label} (Age ${currentAge + label})`}
-                      labelStyle={{ color: '#ffffff', fontWeight: 600 }}
-                      itemStyle={{ color: '#ffffff' }}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="contributions"
-                      stackId="1"
-                      stroke="#71717a"
-                      fill="#d4d4d8"
-                      name="Your Contributions"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="interest"
-                      stackId="1"
-                      stroke="#22c55e"
-                      fill="#86efac"
-                      name="Compound Interest"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-                <Text fontSize="sm" color="neutral.600" mt={4} textAlign="center">
-                  Notice how compound interest (green) grows exponentially over time - this is why starting early is so powerful!
+                </Box>
+                <Text fontSize="xs" color="warning.700" lineHeight="tall">
+                  Your ${finalBalance.toLocaleString()} will only buy what ${Math.round(inflationAdjustedValue).toLocaleString()} buys today.
                 </Text>
-              </Box>
-
-              {/* Educational Callout */}
-              <Box
-                bg="neutral.900"
-                color="white"
-                p={6}
-                borderRadius="8px"
-              >
-                <Text fontWeight="bold" fontSize="lg" mb={3}>
-                  Why Compound Interest is Your Greatest Ally
-                </Text>
-                <VStack align="stretch" spacing={3}>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={MdCheckCircle} boxSize={5} color="success.400" mt={0.5} />
-                    <Text fontSize="sm" color="neutral.200">
-                      <strong>The Rule of 72:</strong> Divide 72 by your return rate to see how many years it takes to double your money. At {expectedReturn}% return, your money doubles every {Math.round(72 / expectedReturn)} years.
-                    </Text>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={MdCheckCircle} boxSize={5} color="success.400" mt={0.5} />
-                    <Text fontSize="sm" color="neutral.200">
-                      <strong>Time is your friend:</strong> Starting 10 years earlier can result in 2-3x more wealth at retirement, even with smaller contributions.
-                    </Text>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={MdWarning} boxSize={5} color="warning.400" mt={0.5} />
-                    <Text fontSize="sm" color="neutral.200">
-                      <strong>Beat inflation:</strong> Cash loses ~{inflationRate}% purchasing power yearly. Investing in diversified index funds historically returns 7-10% annually, outpacing inflation.
-                    </Text>
-                  </HStack>
-                </VStack>
-              </Box>
-            </VStack>
+              </VStack>
+            </Box>
           </Grid>
+
+          {/* Growth Chart */}
+          <Box
+            bg="white"
+            border="2px solid"
+            borderColor="neutral.200"
+            borderRadius="8px"
+            p={6}
+            mb={6}
+          >
+            <HStack spacing={3} mb={4}>
+              <Icon as={MdShowChart} boxSize={5} color="neutral.700" />
+              <Text fontWeight="bold" color="neutral.900">
+                Growth Over Time - The Power of Compound Interest
+              </Text>
+            </HStack>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={retirementData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                <XAxis
+                  dataKey="year"
+                  tick={{ fill: '#18181b', fontSize: 12 }}
+                  tickFormatter={(value) => `Year ${value}`}
+                />
+                <YAxis
+                  tick={{ fill: '#18181b', fontSize: 12 }}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#18181b',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '12px',
+                  }}
+                  formatter={(value, name) => {
+                    const labels = {
+                      balance: 'Total Balance',
+                      contributions: 'Your Contributions',
+                      interest: 'Compound Interest',
+                    }
+                    return [`$${value.toLocaleString()}`, labels[name] || name]
+                  }}
+                  labelFormatter={(label) => `Year ${label} (Age ${currentAge + label})`}
+                  labelStyle={{ color: '#ffffff', fontWeight: 600 }}
+                  itemStyle={{ color: '#ffffff' }}
+                />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="contributions"
+                  stackId="1"
+                  stroke="#71717a"
+                  fill="#d4d4d8"
+                  name="Your Contributions"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="interest"
+                  stackId="1"
+                  stroke="#22c55e"
+                  fill="#86efac"
+                  name="Compound Interest"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+            <Text fontSize="sm" color="neutral.600" mt={4} textAlign="center">
+              Notice how compound interest (green) grows exponentially over time - this is why starting early is so powerful!
+            </Text>
+          </Box>
+
+          {/* Educational Callout */}
+          <Box bg="neutral.900" color="white" p={6} borderRadius="8px">
+            <Text fontWeight="bold" fontSize="lg" mb={3}>
+              Why Compound Interest is Your Greatest Ally
+            </Text>
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={4}>
+              <HStack align="start" spacing={3}>
+                <Icon as={MdCheckCircle} boxSize={5} color="success.400" mt={0.5} />
+                <Text fontSize="sm" color="neutral.200">
+                  <strong>The Rule of 72:</strong> Divide 72 by your return rate to see how many years it takes to double your money. At {expectedReturn}% return, your money doubles every {Math.round(72 / expectedReturn)} years.
+                </Text>
+              </HStack>
+              <HStack align="start" spacing={3}>
+                <Icon as={MdCheckCircle} boxSize={5} color="success.400" mt={0.5} />
+                <Text fontSize="sm" color="neutral.200">
+                  <strong>Time is your friend:</strong> Starting 10 years earlier can result in 2-3x more wealth at retirement, even with smaller contributions.
+                </Text>
+              </HStack>
+              <HStack align="start" spacing={3}>
+                <Icon as={MdWarning} boxSize={5} color="warning.400" mt={0.5} />
+                <Text fontSize="sm" color="neutral.200">
+                  <strong>Beat inflation:</strong> Cash loses ~{inflationRate}% purchasing power yearly. Investing in diversified index funds historically returns 7-10% annually.
+                </Text>
+              </HStack>
+            </Grid>
+          </Box>
         </Container>
       </Box>
 
