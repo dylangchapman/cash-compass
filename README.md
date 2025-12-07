@@ -219,7 +219,7 @@ Upgrade from heuristic scoring to machine learning:
 - Active learning loop where user corrections improve model accuracy over time
 
 ## Video
-
+[Link to presentation video ](https://youtu.be/nPSECGk6Shg)
 
 ## Contact
 For questions or feedback, reach out @ dchapman.jp@gmail.com
