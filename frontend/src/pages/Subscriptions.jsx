@@ -12,19 +12,26 @@ import {
   Icon,
   Container,
   Flex,
+  Tooltip,
 } from '@chakra-ui/react'
-import { MdWarning, MdInsights, MdCheckCircle } from 'react-icons/md'
+import { MdWarning, MdInsights, MdCheckCircle, MdHelpOutline } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
+import LoginPrompt from '../components/LoginPrompt'
 
 export default function Subscriptions() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
   useEffect(() => {
-    loadSubscriptions()
-  }, [])
+    if (isLoggedIn) {
+      loadSubscriptions()
+    } else {
+      setLoading(false)
+    }
+  }, [isLoggedIn])
 
   const loadSubscriptions = async () => {
     try {
@@ -52,6 +59,15 @@ export default function Subscriptions() {
         <AlertIcon />
         Error loading subscriptions: {error}
       </Alert>
+    )
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <LoginPrompt
+        title="Subscription Manager"
+        description="Sign in to track and optimize all your recurring charges, identify unused subscriptions, and find potential savings."
+      />
     )
   }
 
@@ -105,6 +121,7 @@ export default function Subscriptions() {
                 sublabel={grayCharges.length > 0 ? 'Review recommended' : 'All clear'}
                 icon={grayCharges.length > 0 ? MdWarning : MdCheckCircle}
                 iconColor={grayCharges.length > 0 ? 'warning.400' : 'success.400'}
+                tooltip="Gray charges are recurring payments you may have forgotten about or no longer use—like free trials that converted to paid, unused memberships, or services you signed up for once and forgot."
               />
             </Grid>
           </VStack>
@@ -159,9 +176,27 @@ export default function Subscriptions() {
               <HStack spacing={4} mb={4}>
                 <Icon as={MdWarning} boxSize={8} color="warning.600" />
                 <Box>
-                  <Text fontSize="2xl" fontWeight="black" color="neutral.900" mb={1}>
-                    Potential Gray Charges Detected
-                  </Text>
+                  <HStack spacing={2} mb={1}>
+                    <Text fontSize="2xl" fontWeight="black" color="neutral.900">
+                      Potential Gray Charges Detected
+                    </Text>
+                    <Tooltip
+                      label="Gray charges are sneaky recurring fees that often go unnoticed—expired free trials, forgotten memberships, or duplicate services. We flag these based on keywords in your transaction notes like 'trial', 'protection plan', or 'suspicious'."
+                      placement="top"
+                      hasArrow
+                      bg="neutral.900"
+                      color="white"
+                      px={4}
+                      py={3}
+                      borderRadius="8px"
+                      fontSize="sm"
+                      maxW="320px"
+                    >
+                      <Box as="span" cursor="help">
+                        <Icon as={MdHelpOutline} boxSize={5} color="warning.600" />
+                      </Box>
+                    </Tooltip>
+                  </HStack>
                   <Text fontSize="md" color="neutral.700">
                     We found {grayCharges.length} subscription(s) that may be unwanted or forgotten charges
                   </Text>
@@ -213,11 +248,47 @@ export default function Subscriptions() {
                           {sub.merchant}
                         </Text>
                         {sub.is_gray_charge && (
-                          <StatusBadge status="warning">Potential Gray Charge</StatusBadge>
+                          <Tooltip
+                            label="This charge was flagged because it may be a forgotten subscription, expired free trial, or unwanted recurring fee. Review to confirm if you still need this service."
+                            placement="top"
+                            hasArrow
+                            bg="neutral.900"
+                            color="white"
+                            px={4}
+                            py={3}
+                            borderRadius="8px"
+                            fontSize="sm"
+                            maxW="280px"
+                          >
+                            <Box as="span">
+                              <StatusBadge status="warning">Potential Gray Charge</StatusBadge>
+                            </Box>
+                          </Tooltip>
                         )}
-                        <StatusBadge status={sub.confidence === 'high' ? 'success' : 'neutral'}>
-                          {sub.confidence} confidence
-                        </StatusBadge>
+                        <Tooltip
+                          label={
+                            sub.confidence === 'high'
+                              ? "High confidence: This merchant charged the same amount 5+ times, strongly indicating a subscription."
+                              : sub.confidence === 'medium'
+                              ? "Medium confidence: This merchant charged similar amounts 3-4 times, likely a subscription."
+                              : "Low confidence: This merchant has recurring charges but the pattern is less consistent."
+                          }
+                          placement="top"
+                          hasArrow
+                          bg="neutral.900"
+                          color="white"
+                          px={4}
+                          py={3}
+                          borderRadius="8px"
+                          fontSize="sm"
+                          maxW="280px"
+                        >
+                          <Box as="span">
+                            <StatusBadge status={sub.confidence === 'high' ? 'success' : 'neutral'}>
+                              {sub.confidence} confidence
+                            </StatusBadge>
+                          </Box>
+                        </Tooltip>
                       </HStack>
                       <Text fontSize="sm" color="neutral.600" textTransform="capitalize" fontWeight="medium">
                         {sub.frequency} billing
@@ -292,19 +363,38 @@ export default function Subscriptions() {
 }
 
 // Metric Block Component
-function MetricBlock({ label, value, sublabel, icon, iconColor }) {
+function MetricBlock({ label, value, sublabel, icon, iconColor, tooltip }) {
   return (
     <Box>
-      <Text
-        fontSize="xs"
-        fontWeight="semibold"
-        textTransform="uppercase"
-        letterSpacing="wider"
-        color="neutral.500"
-        mb={3}
-      >
-        {label}
-      </Text>
+      <HStack spacing={2} mb={3}>
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          textTransform="uppercase"
+          letterSpacing="wider"
+          color="neutral.500"
+        >
+          {label}
+        </Text>
+        {tooltip && (
+          <Tooltip
+            label={tooltip}
+            placement="top"
+            hasArrow
+            bg="neutral.800"
+            color="white"
+            px={4}
+            py={3}
+            borderRadius="8px"
+            fontSize="sm"
+            maxW="300px"
+          >
+            <Box as="span" cursor="help">
+              <Icon as={MdHelpOutline} boxSize={4} color="neutral.500" />
+            </Box>
+          </Tooltip>
+        )}
+      </HStack>
       <HStack spacing={3} align="baseline">
         <Text
           fontSize={{ base: '3xl', md: '4xl' }}

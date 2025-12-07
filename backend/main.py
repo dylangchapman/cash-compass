@@ -8,7 +8,8 @@ from datetime import datetime
 from models import (
     Transaction, AnalyticsSummary, Subscription,
     GoalStatus, ChatMessage, ChatResponse,
-    PortfolioSummary, NetWorth, NetWorthGoalProgress
+    PortfolioSummary, NetWorth, NetWorthGoalProgress,
+    TimeMachineScenario, TimeMachineProjection
 )
 from analytics import analytics
 from ai_service import ai_service
@@ -300,6 +301,221 @@ def backtest_custom_allocation(config: CustomAllocation):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============== Time Machine Endpoints ==============
+
+@app.get("/api/time-machine/baseline")
+def get_time_machine_baseline():
+    """Get current baseline data for Time Machine"""
+    try:
+        analytics_data = analytics.get_spending_insights()
+        subscriptions = analytics.detect_subscriptions()
+
+        # Calculate monthly averages
+        months_of_data = len(analytics_data.trends[0].monthly_data) if analytics_data.trends else 6
+        monthly_income = analytics_data.total_income / max(months_of_data, 1)
+        monthly_expenses = analytics_data.total_expenses / max(months_of_data, 1)
+
+        # Get category breakdown
+        category_spending = {}
+        for cat in analytics_data.spending_by_category:
+            category_spending[cat.category.lower()] = cat.total / max(months_of_data, 1)
+
+        return {
+            "monthly_income": round(monthly_income, 2),
+            "monthly_expenses": round(monthly_expenses, 2),
+            "monthly_savings": round(monthly_income - monthly_expenses, 2),
+            "savings_rate": round((monthly_income - monthly_expenses) / monthly_income * 100, 1) if monthly_income > 0 else 0,
+            "category_spending": {
+                "restaurants": round(category_spending.get("restaurants", 0), 2),
+                "groceries": round(category_spending.get("groceries", 0), 2),
+                "shopping": round(category_spending.get("shopping", 0), 2),
+                "entertainment": round(category_spending.get("entertainment", 0), 2),
+                "transportation": round(category_spending.get("transportation", 0), 2),
+                "subscriptions": round(sum(sub.amount for sub in subscriptions), 2),
+                "rent": round(category_spending.get("rent", category_spending.get("housing", 0)), 2),
+                "utilities": round(category_spending.get("utilities", 0), 2),
+                "other": round(sum(v for k, v in category_spending.items()
+                    if k not in ["restaurants", "groceries", "shopping", "entertainment",
+                                 "transportation", "rent", "housing", "utilities"]), 2)
+            },
+            "subscription_total": round(sum(sub.amount for sub in subscriptions), 2),
+            "months_of_data": months_of_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/time-machine/project", response_model=TimeMachineProjection)
+def project_time_machine(scenario: TimeMachineScenario):
+    """Calculate projections based on user's what-if scenario"""
+    try:
+        # Get baseline data
+        analytics_data = analytics.get_spending_insights()
+        subscriptions = analytics.detect_subscriptions()
+
+        # Calculate current baseline
+        months_of_data = len(analytics_data.trends[0].monthly_data) if analytics_data.trends else 6
+        current_monthly_income = analytics_data.total_income / max(months_of_data, 1)
+        current_monthly_expenses = analytics_data.total_expenses / max(months_of_data, 1)
+        current_monthly_savings = current_monthly_income - current_monthly_expenses
+        current_savings_rate = (current_monthly_savings / current_monthly_income * 100) if current_monthly_income > 0 else 0
+
+        # Get category breakdown for baseline
+        category_spending = {}
+        for cat in analytics_data.spending_by_category:
+            category_spending[cat.category.lower()] = cat.total / max(months_of_data, 1)
+
+        # Build category comparison
+        categories = [
+            ("restaurants", scenario.restaurants_adjustment),
+            ("groceries", scenario.groceries_adjustment),
+            ("shopping", scenario.shopping_adjustment),
+            ("entertainment", scenario.entertainment_adjustment),
+            ("transportation", scenario.transportation_adjustment),
+            ("subscriptions", scenario.subscriptions_adjustment),
+            ("rent", scenario.rent_adjustment),
+        ]
+
+        category_comparison = []
+        scenario_expenses = 0
+        sub_total = sum(sub.amount for sub in subscriptions)
+
+        for cat_name, adjustment in categories:
+            if cat_name == "subscriptions":
+                current = sub_total
+            elif cat_name == "rent":
+                current = category_spending.get("rent", category_spending.get("housing", 0))
+            else:
+                current = category_spending.get(cat_name, 0)
+
+            scenario_amount = current * (1 + adjustment / 100)
+            difference = scenario_amount - current
+
+            category_comparison.append({
+                "category": cat_name.capitalize(),
+                "current": round(current, 2),
+                "scenario": round(scenario_amount, 2),
+                "difference": round(difference, 2),
+                "adjustment_percent": adjustment
+            })
+            scenario_expenses += scenario_amount
+
+        # Add "other" expenses
+        other_current = sum(v for k, v in category_spending.items()
+            if k not in ["restaurants", "groceries", "shopping", "entertainment",
+                        "transportation", "rent", "housing", "utilities"])
+        other_scenario = other_current * (1 + scenario.other_adjustment / 100)
+        scenario_expenses += other_scenario
+
+        category_comparison.append({
+            "category": "Other",
+            "current": round(other_current, 2),
+            "scenario": round(other_scenario, 2),
+            "difference": round(other_scenario - other_current, 2),
+            "adjustment_percent": scenario.other_adjustment
+        })
+
+        # Add utilities (no adjustment)
+        utilities = category_spending.get("utilities", 0)
+        scenario_expenses += utilities
+
+        # Calculate scenario income
+        scenario_monthly_income = current_monthly_income * (1 + scenario.income_adjustment / 100)
+
+        # Calculate scenario savings
+        scenario_monthly_savings = scenario_monthly_income - scenario_expenses
+        scenario_savings_rate = (scenario_monthly_savings / scenario_monthly_income * 100) if scenario_monthly_income > 0 else 0
+
+        # Calculate differences
+        savings_difference = scenario_monthly_savings - current_monthly_savings
+        savings_difference_percent = (savings_difference / current_monthly_savings * 100) if current_monthly_savings != 0 else 0
+
+        # Generate 12-month projections
+        projection_months = []
+        current_cumulative = 0
+        scenario_cumulative = 0
+
+        for month in range(1, 13):
+            current_cumulative += current_monthly_savings
+            scenario_cumulative += scenario_monthly_savings
+            projection_months.append({
+                "month": month,
+                "current_savings": round(current_cumulative, 2),
+                "scenario_savings": round(scenario_cumulative, 2),
+                "difference": round(scenario_cumulative - current_cumulative, 2)
+            })
+
+        # Emergency fund calculations
+        monthly_expenses_for_ef = current_monthly_expenses  # Use current as baseline
+        current_emergency_months = current_monthly_savings * 6 / monthly_expenses_for_ef if monthly_expenses_for_ef > 0 else 0
+        scenario_emergency_months = scenario_monthly_savings * 6 / scenario_expenses if scenario_expenses > 0 else 0
+
+        # Time to reach emergency fund goal
+        ef_target = scenario.emergency_fund_target
+        months_to_ef = None
+        if scenario_monthly_savings > 0:
+            months_to_ef = max(0, ef_target / scenario_monthly_savings)
+
+        # Investment growth projection (compound growth)
+        investment_projection = []
+        current_balance = 0
+        scenario_balance = 0
+        monthly_return = scenario.investment_return_rate / 100 / 12
+
+        for year in range(1, 11):  # 10 year projection
+            for _ in range(12):  # Monthly compounding
+                current_balance = current_balance * (1 + monthly_return) + current_monthly_savings
+                scenario_balance = scenario_balance * (1 + monthly_return) + scenario_monthly_savings
+
+            investment_projection.append({
+                "year": year,
+                "current_balance": round(current_balance, 2),
+                "scenario_balance": round(scenario_balance, 2),
+                "difference": round(scenario_balance - current_balance, 2)
+            })
+
+        # Goal progress (time to reach retirement goal)
+        retirement_goal = scenario.retirement_goal
+        current_time_to_goal = None
+        scenario_time_to_goal = None
+        goal_time_saved = None
+
+        if current_monthly_savings > 0:
+            # Simple calculation (not accounting for compound growth for simplicity)
+            # More accurate: use future value formula
+            current_time_to_goal = retirement_goal / (current_monthly_savings * 12)  # in years
+
+        if scenario_monthly_savings > 0:
+            scenario_time_to_goal = retirement_goal / (scenario_monthly_savings * 12)  # in years
+
+        if current_time_to_goal is not None and scenario_time_to_goal is not None:
+            goal_time_saved = current_time_to_goal - scenario_time_to_goal
+
+        return TimeMachineProjection(
+            current_monthly_income=round(current_monthly_income, 2),
+            current_monthly_expenses=round(current_monthly_expenses, 2),
+            current_monthly_savings=round(current_monthly_savings, 2),
+            current_savings_rate=round(current_savings_rate, 1),
+            scenario_monthly_income=round(scenario_monthly_income, 2),
+            scenario_monthly_expenses=round(scenario_expenses, 2),
+            scenario_monthly_savings=round(scenario_monthly_savings, 2),
+            scenario_savings_rate=round(scenario_savings_rate, 1),
+            savings_difference=round(savings_difference, 2),
+            savings_difference_percent=round(savings_difference_percent, 1),
+            category_comparison=category_comparison,
+            projection_months=projection_months,
+            current_emergency_fund_months=round(current_emergency_months, 1),
+            scenario_emergency_fund_months=round(scenario_emergency_months, 1),
+            months_to_emergency_fund_goal=round(months_to_ef, 1) if months_to_ef else None,
+            investment_growth_projection=investment_projection,
+            current_time_to_goal=round(current_time_to_goal, 1) if current_time_to_goal else None,
+            scenario_time_to_goal=round(scenario_time_to_goal, 1) if scenario_time_to_goal else None,
+            goal_time_saved=round(goal_time_saved, 1) if goal_time_saved else None
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============== Authentication Endpoints ==============
 

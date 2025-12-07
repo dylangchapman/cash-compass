@@ -35,15 +35,29 @@ import {
   SliderThumb,
   Checkbox,
   Switch,
+  Tooltip as ChakraTooltip,
 } from '@chakra-ui/react'
-import { MdRefresh, MdTrendingUp, MdTrendingDown, MdShowChart, MdCompareArrows, MdSettings, MdStackedLineChart } from 'react-icons/md'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
+import { MdRefresh, MdTrendingUp, MdTrendingDown, MdShowChart, MdCompareArrows, MdSettings, MdStackedLineChart, MdHelpOutline } from 'react-icons/md'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
 import { financialAPI } from '../services/api'
+import LoginPrompt from '../components/LoginPrompt'
 
 const ALLOCATION_COLORS = {
   stocks: '#18181b',
   etfs: '#52525b',
   bonds: '#a1a1aa',
+}
+
+// Tooltip definitions for backtest metrics
+const METRIC_TOOLTIPS = {
+  'Total Return': 'The total percentage gain or loss on your investment over the entire backtest period, including all price changes and dividends.',
+  'CAGR': 'Compound Annual Growth Rate - The average yearly return of your investment, smoothed out over time. A 10% CAGR means your investment grew by an average of 10% per year.',
+  'Sharpe Ratio': 'Measures risk-adjusted return. It shows how much extra return you get for each unit of risk taken. Higher is better. Above 1.0 is good, above 2.0 is excellent.',
+  'Sortino Ratio': 'Similar to Sharpe Ratio, but only considers downside risk (losses). Higher is better. It ignores upside volatility since that\'s good for investors.',
+  'Max Drawdown': 'The largest peak-to-trough decline during the backtest period. A -20% max drawdown means at some point, your portfolio dropped 20% from its highest value.',
+  'Volatility': 'How much your investment\'s returns fluctuate. Higher volatility means bigger swings (both up and down). Lower volatility is generally less risky.',
+  'Win Rate': 'The percentage of trading periods (days/months) that ended with a positive return. A 55% win rate means you made money 55% of the time.',
+  'Final Value': 'The ending value of your investment after the backtest period, based on your initial capital.',
 }
 
 const STRATEGY_COLORS = ['#18181b', '#3b82f6', '#10b981']
@@ -52,11 +66,21 @@ const SMA_COLOR = '#ef4444'
 const EMA_COLOR = '#8b5cf6'
 
 export default function Portfolio() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
   const [portfolio, setPortfolio] = useState(null)
   const toast = useToast()
+
+  if (!isLoggedIn) {
+    return (
+      <LoginPrompt
+        title="Portfolio Tracker"
+        description="Sign in to track your investment portfolio, view real-time values, and run historical backtests on different strategies."
+      />
+    )
+  }
 
   // Backtesting state
   const [backtestTab, setBacktestTab] = useState(0)
@@ -321,7 +345,7 @@ export default function Portfolio() {
                       <Cell key={`cell-${index}`} fill={ALLOCATION_COLORS[entry.key]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px', padding: '12px 16px' }} formatter={(value) => `$${value.toLocaleString()}`} labelStyle={{ color: '#ffffff', fontWeight: 600 }} itemStyle={{ color: '#ffffff', fontWeight: 600 }} />
+                  <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px', padding: '12px 16px' }} formatter={(value) => `$${value.toLocaleString()}`} labelStyle={{ color: '#ffffff', fontWeight: 600 }} itemStyle={{ color: '#ffffff', fontWeight: 600 }} />
                 </PieChart>
               </ResponsiveContainer>
             </Box>
@@ -709,7 +733,7 @@ function BacktestResults({ result }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => v.substring(5)} />
                 <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px' }} formatter={(v) => [`$${v.toLocaleString()}`, 'Value']} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px' }} formatter={(v) => [`$${v.toLocaleString()}`, 'Value']} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} />
                 <Line type="monotone" dataKey="value" stroke="#18181b" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -758,12 +782,12 @@ function StrategyComparisonResults({ comparison }) {
             <Thead>
               <Tr>
                 <Th>Strategy</Th>
-                <Th isNumeric>Total Return</Th>
-                <Th isNumeric>CAGR</Th>
-                <Th isNumeric>Sharpe</Th>
-                <Th isNumeric>Sortino</Th>
-                <Th isNumeric>Max DD</Th>
-                <Th isNumeric>Final Value</Th>
+                <ThWithTooltip label="Total Return" tooltip={METRIC_TOOLTIPS['Total Return']} isNumeric />
+                <ThWithTooltip label="CAGR" tooltip={METRIC_TOOLTIPS['CAGR']} isNumeric />
+                <ThWithTooltip label="Sharpe" tooltip={METRIC_TOOLTIPS['Sharpe Ratio']} isNumeric />
+                <ThWithTooltip label="Sortino" tooltip={METRIC_TOOLTIPS['Sortino Ratio']} isNumeric />
+                <ThWithTooltip label="Max DD" tooltip={METRIC_TOOLTIPS['Max Drawdown']} isNumeric />
+                <ThWithTooltip label="Final Value" tooltip={METRIC_TOOLTIPS['Final Value']} isNumeric />
               </Tr>
             </Thead>
             <Tbody>
@@ -798,7 +822,7 @@ function StrategyComparisonResults({ comparison }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => v?.substring(5)} />
                 <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px' }} formatter={(v) => [`$${v?.toLocaleString()}`, '']} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px' }} formatter={(v) => [`$${v?.toLocaleString()}`, '']} labelStyle={{ color: '#fff' }} itemStyle={{ color: '#fff' }} />
                 <Legend />
                 {comparison.strategies.map((s, idx) => (
                   <Line key={idx} type="monotone" dataKey={`strategy${idx}`} name={s.strategy_name} stroke={STRATEGY_COLORS[idx]} strokeWidth={2} dot={false} />
@@ -871,12 +895,12 @@ function MultiCompareResults({ results, presetOptions, selectedPresets, showSMA,
             <Thead>
               <Tr>
                 <Th>Portfolio</Th>
-                <Th isNumeric>Total Return</Th>
-                <Th isNumeric>CAGR</Th>
-                <Th isNumeric>Sharpe</Th>
-                <Th isNumeric>Sortino</Th>
-                <Th isNumeric>Max DD</Th>
-                <Th isNumeric>Final Value</Th>
+                <ThWithTooltip label="Total Return" tooltip={METRIC_TOOLTIPS['Total Return']} isNumeric />
+                <ThWithTooltip label="CAGR" tooltip={METRIC_TOOLTIPS['CAGR']} isNumeric />
+                <ThWithTooltip label="Sharpe" tooltip={METRIC_TOOLTIPS['Sharpe Ratio']} isNumeric />
+                <ThWithTooltip label="Sortino" tooltip={METRIC_TOOLTIPS['Sortino Ratio']} isNumeric />
+                <ThWithTooltip label="Max DD" tooltip={METRIC_TOOLTIPS['Max Drawdown']} isNumeric />
+                <ThWithTooltip label="Final Value" tooltip={METRIC_TOOLTIPS['Final Value']} isNumeric />
               </Tr>
             </Thead>
             <Tbody>
@@ -918,7 +942,7 @@ function MultiCompareResults({ results, presetOptions, selectedPresets, showSMA,
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
                 <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => v?.substring(5)} />
                 <YAxis tick={{ fill: '#71717a', fontSize: 11 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px' }}
                   formatter={(v, name) => {
                     if (name === 'sma') return [`$${v?.toLocaleString()}`, `SMA(${smaPeriod})`]
@@ -983,9 +1007,31 @@ function MetricBlock({ label, value, sublabel }) {
 }
 
 function MetricBox({ label, value, color = 'neutral.900' }) {
+  const tooltip = METRIC_TOOLTIPS[label]
+
   return (
     <Box p={4} bg="neutral.50" borderRadius="6px">
-      <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold" mb={1}>{label}</Text>
+      <HStack spacing={1} mb={1}>
+        <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold">{label}</Text>
+        {tooltip && (
+          <ChakraTooltip
+            label={tooltip}
+            placement="top"
+            hasArrow
+            bg="neutral.900"
+            color="white"
+            px={4}
+            py={3}
+            borderRadius="8px"
+            fontSize="sm"
+            maxW="280px"
+          >
+            <Box as="span" cursor="help">
+              <Icon as={MdHelpOutline} boxSize={3.5} color="neutral.400" />
+            </Box>
+          </ChakraTooltip>
+        )}
+      </HStack>
       <Text fontSize="xl" fontWeight="black" color={color} letterSpacing="tight" sx={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{value}</Text>
     </Box>
   )
@@ -1016,5 +1062,33 @@ function AllocationCard({ title, percent, value, color }) {
         </Box>
       </Flex>
     </Box>
+  )
+}
+
+function ThWithTooltip({ label, tooltip, isNumeric }) {
+  return (
+    <Th isNumeric={isNumeric}>
+      <HStack spacing={1} justify={isNumeric ? 'flex-end' : 'flex-start'}>
+        <Text>{label}</Text>
+        {tooltip && (
+          <ChakraTooltip
+            label={tooltip}
+            placement="top"
+            hasArrow
+            bg="neutral.900"
+            color="white"
+            px={4}
+            py={3}
+            borderRadius="8px"
+            fontSize="sm"
+            maxW="280px"
+          >
+            <Box as="span" cursor="help">
+              <Icon as={MdHelpOutline} boxSize={3.5} color="neutral.400" />
+            </Box>
+          </ChakraTooltip>
+        )}
+      </HStack>
+    </Th>
   )
 }

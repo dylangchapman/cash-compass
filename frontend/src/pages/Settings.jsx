@@ -25,7 +25,6 @@ import {
   Alert,
   AlertIcon,
   Grid,
-  Select,
 } from '@chakra-ui/react'
 import {
   MdPerson,
@@ -33,16 +32,7 @@ import {
   MdDownload,
   MdDelete,
   MdPrivacyTip,
-  MdAdd,
-  MdClose,
-  MdFlag,
 } from 'react-icons/md'
-
-const DEFAULT_GOALS = [
-  { goal_name: 'Monthly Spending Limit', target: 2500, category: null },
-  { goal_name: 'Groceries Budget', target: 400, category: 'Groceries' },
-  { goal_name: 'Dining Out Budget', target: 150, category: 'Restaurants' },
-]
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -62,10 +52,6 @@ export default function Settings() {
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' })
   const deleteAccountModal = useDisclosure()
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
-
-  // Goals state (for editing goals that will be analyzed on Insights page)
-  const [goals, setGoals] = useState(DEFAULT_GOALS)
-  const [newGoal, setNewGoal] = useState({ goal_name: '', target: '', category: '' })
 
   // Account handlers
   const handlePrivacyToggle = (setting) => {
@@ -106,25 +92,6 @@ export default function Settings() {
     navigate('/login')
   }
 
-  // Goals handlers
-  const addGoal = () => {
-    if (!newGoal.goal_name || !newGoal.target) {
-      toast({ title: 'Missing information', description: 'Please enter goal name and target', status: 'warning', duration: 3000 })
-      return
-    }
-    setGoals([...goals, {
-      goal_name: newGoal.goal_name,
-      target: parseFloat(newGoal.target),
-      category: newGoal.category || null,
-    }])
-    setNewGoal({ goal_name: '', target: '', category: '' })
-    toast({ title: 'Goal added', status: 'success', duration: 2000 })
-  }
-
-  const removeGoal = (index) => {
-    setGoals(goals.filter((_, idx) => idx !== index))
-  }
-
   return (
     <Box bg="white" minH="100vh">
       {/* Header */}
@@ -139,7 +106,7 @@ export default function Settings() {
             Account Settings
           </Text>
           <Text fontSize="lg" color="neutral.400">
-            Manage your account, security, and spending goals
+            Manage your account, security, and privacy preferences
           </Text>
         </Container>
       </Box>
@@ -246,95 +213,6 @@ export default function Settings() {
                   </Button>
                 </SettingsSection>
 
-                {/* Spending Goals */}
-                <SettingsSection icon={MdFlag} title="Spending Goals">
-                  <Text fontSize="sm" color="neutral.600" mb={4}>
-                    Set your monthly spending targets. View your progress on the <Text as={Link} to="/insights" color="neutral.900" fontWeight="bold" textDecoration="underline">Insights page</Text>.
-                  </Text>
-                  <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={4} mb={4}>
-                    <FormControl>
-                      <FormLabel fontSize="sm" fontWeight="bold" color="neutral.900">Goal Name</FormLabel>
-                      <Input
-                        placeholder="e.g., Coffee Budget"
-                        value={newGoal.goal_name}
-                        onChange={(e) => setNewGoal({ ...newGoal, goal_name: e.target.value })}
-                        color="neutral.900"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel fontSize="sm" fontWeight="bold" color="neutral.900">Monthly Target ($)</FormLabel>
-                      <Input
-                        type="number"
-                        placeholder="e.g., 100"
-                        value={newGoal.target}
-                        onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
-                        color="neutral.900"
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel fontSize="sm" fontWeight="bold" color="neutral.900">Category</FormLabel>
-                      <Select
-                        placeholder="All spending"
-                        value={newGoal.category}
-                        onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
-                      >
-                        <option value="Groceries">Groceries</option>
-                        <option value="Restaurants">Restaurants</option>
-                        <option value="Coffee">Coffee</option>
-                        <option value="Transportation">Transportation</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Utilities">Utilities</option>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Button leftIcon={<MdAdd />} onClick={addGoal} mb={6}>Add Goal</Button>
-
-                  {goals.length > 0 ? (
-                    <VStack align="stretch" spacing={3}>
-                      {goals.map((goal, idx) => (
-                        <Box
-                          key={idx}
-                          p={4}
-                          border="1px solid"
-                          borderColor="neutral.200"
-                          borderRadius="6px"
-                          _hover={{ borderColor: 'neutral.300' }}
-                        >
-                          <Flex justify="space-between" align="center">
-                            <Box>
-                              <Text fontSize="md" fontWeight="bold" color="neutral.900">{goal.goal_name}</Text>
-                              <HStack spacing={3}>
-                                <Text fontSize="sm" color="neutral.600">${goal.target}/month</Text>
-                                {goal.category && (
-                                  <>
-                                    <Text color="neutral.400">|</Text>
-                                    <Text fontSize="sm" color="neutral.600">{goal.category}</Text>
-                                  </>
-                                )}
-                              </HStack>
-                            </Box>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              leftIcon={<MdClose />}
-                              onClick={() => removeGoal(idx)}
-                              color="neutral.600"
-                              _hover={{ color: 'error.600', bg: 'error.50' }}
-                            >
-                              Remove
-                            </Button>
-                          </Flex>
-                        </Box>
-                      ))}
-                    </VStack>
-                  ) : (
-                    <Box py={6} textAlign="center" border="2px dashed" borderColor="neutral.200" borderRadius="8px">
-                      <Text color="neutral.500">No goals set yet. Add your first goal above.</Text>
-                    </Box>
-                  )}
-                </SettingsSection>
-
                 {/* Legal Links */}
                 <Box pt={8} borderTop="1px solid" borderColor="neutral.200">
                   <HStack spacing={8} justify="center">
@@ -350,29 +228,43 @@ export default function Settings() {
       </Container>
 
       {/* Delete Account Modal */}
-      <Modal isOpen={deleteAccountModal.isOpen} onClose={deleteAccountModal.onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Delete Account</ModalHeader>
-          <ModalBody>
+      <Modal isOpen={deleteAccountModal.isOpen} onClose={deleteAccountModal.onClose} isCentered>
+        <ModalOverlay bg="blackAlpha.800" />
+        <ModalContent
+          bg="neutral.900"
+          border="2px solid"
+          borderColor="neutral.600"
+          borderRadius="8px"
+          boxShadow="0 10px 40px rgba(0, 0, 0, 0.5)"
+        >
+          <ModalHeader color="white" borderBottom="1px solid" borderColor="neutral.700" pb={4}>
+            Delete Account
+          </ModalHeader>
+          <ModalBody py={6}>
             <VStack align="stretch" spacing={4}>
-              <Alert status="error" borderRadius="6px">
-                <AlertIcon />
-                <Text fontWeight="semibold">This will permanently delete your account</Text>
+              <Alert status="error" borderRadius="6px" bg="error.900" border="1px solid" borderColor="error.600">
+                <AlertIcon color="error.400" />
+                <Text fontWeight="semibold" color="error.200">This will permanently delete your account</Text>
               </Alert>
-              <Text color="neutral.700">Type <strong>DELETE</strong> to confirm:</Text>
+              <Text color="neutral.200">Type <Text as="strong" color="white">DELETE</Text> to confirm:</Text>
               <Input
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 placeholder="Type DELETE"
-                bg="white"
-                color="neutral.900"
+                bg="neutral.800"
+                color="white"
+                border="1px solid"
+                borderColor="neutral.600"
+                _focus={{ borderColor: 'neutral.400', boxShadow: 'none' }}
+                _placeholder={{ color: 'neutral.500' }}
               />
             </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={deleteAccountModal.onClose}>Cancel</Button>
-            <Button bg="error.600" color="white" _hover={{ bg: 'error.700' }} onClick={handleDeleteAccount} isDisabled={deleteConfirmText !== 'DELETE'}>
+          <ModalFooter borderTop="1px solid" borderColor="neutral.700" pt={4}>
+            <Button variant="ghost" mr={3} onClick={deleteAccountModal.onClose} color="neutral.200" _hover={{ bg: 'neutral.700', color: 'white' }}>
+              Cancel
+            </Button>
+            <Button bg="error.600" color="white" _hover={{ bg: 'error.500' }} onClick={handleDeleteAccount} isDisabled={deleteConfirmText !== 'DELETE'}>
               Permanently Delete Account
             </Button>
           </ModalFooter>

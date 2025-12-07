@@ -21,17 +21,6 @@ export const financialAPI = {
     return response.data
   },
 
-  // Transactions
-  getTransactions: async (limit = 100) => {
-    const response = await api.get(`/api/transactions?limit=${limit}`)
-    return response.data
-  },
-
-  getTransactionsByCategory: async (category, limit = 500) => {
-    const response = await api.get(`/api/transactions/category/${encodeURIComponent(category)}?limit=${limit}`)
-    return response.data
-  },
-
   // Dashboard
   getDashboardSummary: async () => {
     const response = await api.get('/api/dashboard/summary')
@@ -102,6 +91,17 @@ export const financialAPI = {
 
   backtestCustomAllocation: async (allocation, years = 5, initialCapital = 10000) => {
     const response = await api.post('/api/backtest/custom', { allocation, years, initial_capital: initialCapital })
+    return response.data
+  },
+
+  // Time Machine
+  getTimeMachineBaseline: async () => {
+    const response = await api.get('/api/time-machine/baseline')
+    return response.data
+  },
+
+  projectTimeMachine: async (scenario) => {
+    const response = await api.post('/api/time-machine/project', scenario)
     return response.data
   },
 }

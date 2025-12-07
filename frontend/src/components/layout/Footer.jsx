@@ -18,7 +18,7 @@ export default function Footer() {
           <VStack align="start" spacing={3}>
             <HStack spacing={2}>
               <Text fontSize="lg" fontWeight="semibold" color="neutral.900">
-                Financial Coach
+                CashCompass
               </Text>
               <Icon as={MdShield} boxSize={5} color="primary.500" />
             </HStack>
@@ -89,7 +89,7 @@ export default function Footer() {
 
         <HStack justify="space-between" align="center" flexWrap="wrap">
           <Text fontSize="xs" color="neutral.500">
-            © 2025 Financial Coach. Demo application for case study purposes.
+            © 2025 CashCompass Demo
           </Text>
           <HStack spacing={6}>
             <ChakraLink fontSize="xs" color="neutral.500" _hover={{ color: 'primary.500' }}>

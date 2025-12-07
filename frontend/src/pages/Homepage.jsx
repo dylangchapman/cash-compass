@@ -56,7 +56,7 @@ export default function Homepage() {
                 lineHeight="tighter"
                 mb={8}
               >
-                Your AI-powered financial coach
+                CashCompass: Meet your new AI-powered financial coach
               </Text>
               <Text
                 fontSize={{ base: 'xl', md: '2xl' }}
@@ -196,7 +196,7 @@ export default function Homepage() {
             <StepCard
               number="1"
               title="Connect your data"
-              description="Upload your transaction history and investment portfolio to get started"
+              description="Upload your transaction history or link your bank account and investment portfolio to get started"
             />
             <StepCard
               number="2"
@@ -239,54 +239,6 @@ export default function Homepage() {
               {isLoggedIn ? "Go to Dashboard" : "Get Started Now"}
             </Button>
           </Box>
-        </Container>
-      </Box>
-
-      {/* FOOTER */}
-      <Box py={12} bg="neutral.50" borderTop="1px solid" borderColor="neutral.200">
-        <Container maxW="1400px">
-          <VStack spacing={8}>
-            {/* Security Badge */}
-            <HStack spacing={3} justify="center">
-              <Icon as={MdLock} boxSize={5} color="neutral.600" />
-              <Text fontSize="sm" color="neutral.600">
-                Bank-level 256-bit encryption protects your data
-              </Text>
-            </HStack>
-
-            <Divider />
-
-            {/* Links */}
-            <Flex
-              direction={{ base: 'column', md: 'row' }}
-              justify="space-between"
-              align="center"
-              w="full"
-              gap={6}
-            >
-              <Text fontSize="sm" color="neutral.600">
-                Financial Coach. All rights reserved.
-              </Text>
-
-              <HStack spacing={8}>
-                <Text as={Link} to="/privacy" fontSize="sm" color="neutral.600" _hover={{ color: 'neutral.900' }}>
-                  Privacy Policy
-                </Text>
-                <Text as={Link} to="/terms" fontSize="sm" color="neutral.600" _hover={{ color: 'neutral.900' }}>
-                  Terms of Service
-                </Text>
-                <Text as={Link} to="/account" fontSize="sm" color="neutral.600" _hover={{ color: 'neutral.900' }}>
-                  Account Settings
-                </Text>
-              </HStack>
-            </Flex>
-
-            {/* Disclaimer */}
-            <Text fontSize="xs" color="neutral.500" textAlign="center" maxW="800px">
-              This application provides educational financial information and is not a substitute for professional financial advice.
-              Consult a licensed financial advisor before making investment decisions.
-            </Text>
-          </VStack>
         </Container>
       </Box>
     </Box>

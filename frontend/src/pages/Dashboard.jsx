@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Grid,
@@ -12,9 +12,11 @@ import {
   Container,
   Icon,
   Flex,
-  Divider,
-  Progress,
+  Skeleton,
+  SkeletonText,
+  Button,
 } from '@chakra-ui/react'
+import { Link } from 'react-router-dom'
 import {
   BarChart,
   Bar,
@@ -30,43 +32,141 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { MdTrendingUp, MdTrendingDown, MdCheckCircle, MdFlag } from 'react-icons/md'
+import { MdTrendingUp, MdTrendingDown, MdCheckCircle } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 
-const DEFAULT_NET_WORTH_GOAL = 50000
+// Net worth goal milestones - auto-adjusts based on current net worth
+const NET_WORTH_MILESTONES = [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000]
+
+// Helper to calculate the appropriate net worth goal based on current value
+const calculateNetWorthGoal = (currentNetWorth) => {
+  if (!currentNetWorth || currentNetWorth <= 0) return NET_WORTH_MILESTONES[0]
+
+  // Find the next milestone above current net worth
+  for (const milestone of NET_WORTH_MILESTONES) {
+    if (currentNetWorth < milestone) {
+      return milestone
+    }
+  }
+  // If above all milestones, set goal to next round number
+  return Math.ceil(currentNetWorth / 1000000) * 1000000 + 1000000
+}
+
+// Helper to get the goal after the current one
+const getNextGoalAfterCurrent = (currentGoal) => {
+  const currentIndex = NET_WORTH_MILESTONES.indexOf(currentGoal)
+  if (currentIndex >= 0 && currentIndex < NET_WORTH_MILESTONES.length - 1) {
+    return NET_WORTH_MILESTONES[currentIndex + 1]
+  }
+  // If current goal is not in milestones or is the last one, calculate next
+  return Math.ceil(currentGoal / 1000000) * 1000000 + 1000000
+}
 
 const COLORS = ['#18181b', '#3f3f46', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7']
 
+const CACHE_KEYS = {
+  NET_WORTH: 'cached_net_worth',
+  NET_WORTH_PROGRESS: 'cached_net_worth_progress',
+}
+
+// Helper to safely get cached data
+const getCached = (key) => {
+  try {
+    const cached = localStorage.getItem(key)
+    return cached ? JSON.parse(cached) : null
+  } catch {
+    return null
+  }
+}
+
+// Helper to cache data
+const setCache = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export default function Dashboard() {
+  // Check if user is logged in
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+
+  // Core data loading (fast - blocks page)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
-  const [netWorth, setNetWorth] = useState(null)
-  const [netWorthProgress, setNetWorthProgress] = useState(null)
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
+  // Net worth data (can load async with cache)
+  const [netWorth, setNetWorth] = useState(() => getCached(CACHE_KEYS.NET_WORTH))
+  const [netWorthLoading, setNetWorthLoading] = useState(false)
 
-  const loadDashboardData = async () => {
+  // Net worth progress (AI call - loads async with cache)
+  const [netWorthProgress, setNetWorthProgress] = useState(() => getCached(CACHE_KEYS.NET_WORTH_PROGRESS))
+  const [progressLoading, setProgressLoading] = useState(false)
+
+  // Calculate dynamic goal based on current net worth
+  const currentNetWorthGoal = calculateNetWorthGoal(netWorth?.total_net_worth)
+
+  // Load core dashboard data
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true)
-      const [result, nw] = await Promise.all([
-        financialAPI.getDashboardSummary(),
-        financialAPI.getNetWorth()
-      ])
+      const result = await financialAPI.getDashboardSummary()
       setData(result)
-      setNetWorth(nw)
-
-      // Load net worth progress
-      const progress = await financialAPI.analyzeNetWorthGoal(DEFAULT_NET_WORTH_GOAL)
-      setNetWorthProgress(progress)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  // Load net worth data (async)
+  const loadNetWorth = useCallback(async () => {
+    try {
+      setNetWorthLoading(true)
+      const nw = await financialAPI.getNetWorth()
+      setNetWorth(nw)
+      setCache(CACHE_KEYS.NET_WORTH, nw)
+    } catch (err) {
+      console.error('Error loading net worth:', err)
+    } finally {
+      setNetWorthLoading(false)
+    }
+  }, [])
+
+  // Load net worth progress (AI call - async)
+  const loadNetWorthProgress = useCallback(async (goalAmount) => {
+    try {
+      setProgressLoading(true)
+      const progress = await financialAPI.analyzeNetWorthGoal(goalAmount)
+      setNetWorthProgress(progress)
+      setCache(CACHE_KEYS.NET_WORTH_PROGRESS, progress)
+    } catch (err) {
+      console.error('Error loading net worth progress:', err)
+    } finally {
+      setProgressLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setLoading(false)
+      return
+    }
+    // Load core data first (blocks page)
+    loadDashboardData()
+    // Load net worth data (non-blocking with cache fallback)
+    loadNetWorth()
+  }, [loadDashboardData, loadNetWorth, isLoggedIn])
+
+  // Load net worth progress when net worth is available
+  useEffect(() => {
+    if (isLoggedIn && netWorth?.total_net_worth !== undefined) {
+      const goal = calculateNetWorthGoal(netWorth.total_net_worth)
+      loadNetWorthProgress(goal)
+    }
+  }, [netWorth?.total_net_worth, loadNetWorthProgress, isLoggedIn])
 
   if (loading) {
     return (
@@ -85,15 +185,76 @@ export default function Dashboard() {
     )
   }
 
+  // Show login prompt when not authenticated
+  if (!isLoggedIn) {
+    return (
+      <Box bg="white" minH="100vh">
+        <Box
+          bg="neutral.900"
+          color="white"
+          pt={32}
+          pb={40}
+          position="relative"
+          overflow="hidden"
+        >
+          <Box
+            position="absolute"
+            top="0"
+            left="0"
+            right="0"
+            bottom="0"
+            bgGradient="linear(135deg, neutral.900 0%, neutral.800 100%)"
+            opacity="0.6"
+          />
+          <Container maxW="1400px" position="relative" zIndex="1">
+            <VStack align="center" spacing={8} textAlign="center">
+              <Box maxW="700px">
+                <Text
+                  fontSize={{ base: '4xl', md: '5xl', lg: '6xl' }}
+                  fontWeight="black"
+                  letterSpacing="tighter"
+                  lineHeight="tighter"
+                  mb={6}
+                >
+                  Your financial overview
+                </Text>
+                <Text
+                  fontSize={{ base: 'lg', md: 'xl' }}
+                  color="neutral.400"
+                  fontWeight="normal"
+                  lineHeight="relaxed"
+                >
+                  Sign in to view your personalized spending patterns, track savings, and gain insights into your financial health.
+                </Text>
+              </Box>
+              <Button
+                as={Link}
+                to="/login"
+                size="lg"
+                bg="white"
+                color="neutral.900"
+                _hover={{ bg: 'neutral.100' }}
+                px={8}
+              >
+                Sign In to View Dashboard
+              </Button>
+            </VStack>
+          </Container>
+        </Box>
+      </Box>
+    )
+  }
+
   const savingsRate = data?.savings_rate || 0
   const isPositiveSavings = savingsRate > 0
-  const monthsOfData = 6
+  const monthsOfData = 12 // Trailing 12 months
   const monthlyAvgExpenses = data?.total_expenses ? (data.total_expenses / monthsOfData) : 0
 
   const categoryData = data?.top_categories?.map(cat => ({
     name: cat.category,
     value: cat.total,
     percentage: cat.percentage,
+    monthlyAvg: cat.total / monthsOfData, // Per month figure for tooltip
   })) || []
 
   const getMonthAbbreviation = (monthNum) => {
@@ -117,16 +278,18 @@ export default function Dashboard() {
     })
 
     const sortedMonths = Object.keys(monthlyTotals).sort()
-    let ytdTotal = 0
+    // Only take trailing 12 months
+    const trailing12Months = sortedMonths.slice(-12)
+    let cumulativeTotal = 0
 
-    return sortedMonths.map(month => {
-      ytdTotal += monthlyTotals[month]
+    return trailing12Months.map(month => {
+      cumulativeTotal += monthlyTotals[month]
       const monthNumber = month.substring(5, 7)
       return {
         month: getMonthAbbreviation(monthNumber),
         fullMonth: month,
         monthlySpend: monthlyTotals[month],
-        ytdSpend: ytdTotal
+        cumulativeSpend: cumulativeTotal
       }
     })
   }
@@ -187,14 +350,14 @@ export default function Dashboard() {
               pt={8}
             >
               <MetricBlock
-                label="Monthly Average"
+                label="Monthly Average Expenses"
                 value={`$${monthlyAvgExpenses.toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
-                sublabel="Per month"
+                sublabel="per month"
               />
               <MetricBlock
-                label="YTD Total"
+                label="YTD Total expenses"
                 value={`$${data?.total_expenses?.toLocaleString('en-US', { minimumFractionDigits: 0 })}`}
-                sublabel="Year to date"
+                sublabel="year to date"
               />
               <MetricBlock
                 label="Net Savings"
@@ -218,12 +381,12 @@ export default function Dashboard() {
         <Container maxW="1400px">
           <SectionHeader
             title="Spending analysis"
-            description="Breakdown of expenses by category"
+            description="Breakdown of your expenses by category over the trailing 12 months"
           />
 
           <Grid templateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }} gap={12} mt={12}>
             {/* Bar Chart */}
-            <ChartCard title="Top categories">
+            <ChartCard title="Top spending categories (trailing 12 months)">
               <ResponsiveContainer width="100%" height={360}>
                 <BarChart data={categoryData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
@@ -237,15 +400,23 @@ export default function Dashboard() {
                   />
                   <YAxis tick={{ fill: '#18181b', fontSize: 13, fontWeight: 600 }} stroke="#e4e4e7" />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181b',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '12px 16px',
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <Box bg="#18181b" p={3} borderRadius="6px">
+                            <Text color="white" fontWeight="bold" mb={2}>{label}</Text>
+                            <Text color="white" fontSize="sm">
+                              Total: ${data.value?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </Text>
+                            <Text color="neutral.400" fontSize="sm">
+                              ~${data.monthlyAvg?.toLocaleString('en-US', { minimumFractionDigits: 2 })}/month
+                            </Text>
+                          </Box>
+                        )
+                      }
+                      return null
                     }}
-                    formatter={(value) => [`$${value.toFixed(2)}`, 'Amount']}
-                    labelStyle={{ color: '#ffffff', marginBottom: '4px', fontWeight: 600 }}
-                    itemStyle={{ color: '#ffffff', fontWeight: 600 }}
                   />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                     {categoryData.map((entry, index) => (
@@ -257,13 +428,13 @@ export default function Dashboard() {
             </ChartCard>
 
             {/* Pie Chart */}
-            <ChartCard title="Distribution">
-              <ResponsiveContainer width="100%" height={360}>
+            <ChartCard title="Spending distribution by category (trailing 12 months)">
+              <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
                     data={categoryData}
                     cx="50%"
-                    cy="50%"
+                    cy="45%"
                     labelLine={false}
                     label={{
                       position: 'inside',
@@ -272,7 +443,7 @@ export default function Dashboard() {
                       fontSize: 14,
                       fontWeight: 700,
                     }}
-                    outerRadius={130}
+                    outerRadius={120}
                     fill="#18181b"
                     dataKey="value"
                   >
@@ -281,15 +452,34 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#18181b',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '12px 16px',
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <Box bg="#18181b" p={3} borderRadius="6px">
+                            <Text color="white" fontWeight="bold" mb={2}>{data.name}</Text>
+                            <Text color="white" fontSize="lg" fontWeight="bold">
+                              {data.percentage?.toFixed(1)}%
+                            </Text>
+                            <Text color="neutral.400" fontSize="sm">
+                              ${data.value?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </Text>
+                          </Box>
+                        )
+                      }
+                      return null
                     }}
-                    formatter={(value) => `$${value.toFixed(2)}`}
-                    labelStyle={{ color: '#ffffff', fontWeight: 600 }}
-                    itemStyle={{ color: '#ffffff', fontWeight: 600 }}
+                  />
+                  <Legend
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                    align="center"
+                    wrapperStyle={{
+                      paddingTop: '16px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                    }}
+                    formatter={(value) => <span style={{ color: '#18181b' }}>{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -304,10 +494,10 @@ export default function Dashboard() {
           <Container maxW="1400px">
             <SectionHeader
               title="Spending trends"
-              description="Monthly expenses and year-to-date cumulative spend"
+              description="Monthly expenses and cumulative spend over the trailing 12 months"
             />
 
-            <ChartCard title="6-month overview" mt={12}>
+            <ChartCard title="Monthly spending overview (trailing 12 months)" mt={12}>
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
@@ -347,8 +537,8 @@ export default function Dashboard() {
                   />
                   <Line
                     type="monotone"
-                    dataKey="ytdSpend"
-                    name="YTD Cumulative"
+                    dataKey="cumulativeSpend"
+                    name="Cumulative Spend"
                     stroke="#71717a"
                     strokeWidth={3}
                     strokeDasharray="8 4"
@@ -363,43 +553,47 @@ export default function Dashboard() {
       )}
 
       {/* MILESTONES SECTION */}
-      {netWorthProgress && (
-        <Box py={24} bg="white" borderTop="1px solid" borderColor="neutral.200">
-          <Container maxW="1400px">
-            <SectionHeader
-              title="Financial milestones"
-              description="Track your progress toward your net worth goal"
-            />
+      <Box py={24} bg="white" borderTop="1px solid" borderColor="neutral.200">
+        <Container maxW="1400px">
+          <SectionHeader
+            title="Financial milestones"
+            description="Track your progress toward your net worth goal"
+          />
 
-            {/* Net Worth Overview Card */}
-            <Box
-              bg="neutral.900"
-              color="white"
-              p={8}
-              borderRadius="8px"
-              mt={12}
-            >
-              <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8} mb={6}>
-                <Box>
-                  <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
-                    Current Net Worth
-                  </Text>
+          {/* Net Worth Overview Card */}
+          <Box
+            bg="neutral.900"
+            color="white"
+            p={8}
+            borderRadius="8px"
+            mt={12}
+          >
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8} mb={6}>
+              <Box>
+                <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
+                  Current Net Worth
+                </Text>
+                {netWorth ? (
                   <Text fontSize={{ base: '3xl', md: '4xl' }} fontWeight="black" letterSpacing="tight">
                     ${netWorth?.total_net_worth?.toLocaleString('en-US', { minimumFractionDigits: 0 })}
                   </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
-                    Target Goal
-                  </Text>
-                  <Text fontSize={{ base: '3xl', md: '4xl' }} fontWeight="black" letterSpacing="tight">
-                    ${DEFAULT_NET_WORTH_GOAL.toLocaleString('en-US')}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
-                    Progress
-                  </Text>
+                ) : (
+                  <Skeleton height="40px" width="180px" startColor="neutral.700" endColor="neutral.600" />
+                )}
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
+                  Target Goal
+                </Text>
+                <Text fontSize={{ base: '3xl', md: '4xl' }} fontWeight="black" letterSpacing="tight">
+                  ${currentNetWorthGoal.toLocaleString('en-US')}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color="neutral.500" textTransform="uppercase" letterSpacing="wide" fontWeight="bold" mb={2}>
+                  Progress
+                </Text>
+                {netWorthProgress ? (
                   <Text
                     fontSize={{ base: '3xl', md: '4xl' }}
                     fontWeight="black"
@@ -408,26 +602,32 @@ export default function Dashboard() {
                   >
                     {netWorthProgress?.progress_percent?.toFixed(1)}%
                   </Text>
-                </Box>
-              </Grid>
-              <Box>
-                <Box bg="neutral.700" h="12px" borderRadius="6px" overflow="hidden">
-                  <Box
-                    bg={netWorthProgress?.on_track ? 'success.500' : 'warning.500'}
-                    h="full"
-                    w={`${Math.min(netWorthProgress?.progress_percent || 0, 100)}%`}
-                    transition="width 0.5s ease"
-                  />
-                </Box>
+                ) : (
+                  <HStack spacing={2}>
+                    <Skeleton height="40px" width="100px" startColor="neutral.700" endColor="neutral.600" />
+                    {progressLoading && <Spinner size="sm" color="neutral.400" />}
+                  </HStack>
+                )}
+              </Box>
+            </Grid>
+            <Box>
+              <Box bg="neutral.700" h="12px" borderRadius="6px" overflow="hidden">
+                <Box
+                  bg={netWorthProgress?.on_track ? 'success.500' : 'warning.500'}
+                  h="full"
+                  w={`${Math.min(netWorthProgress?.progress_percent || 0, 100)}%`}
+                  transition="width 0.5s ease"
+                />
               </Box>
             </Box>
+          </Box>
 
             {/* Milestone Progress Indicators */}
             <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }} gap={4} mt={8}>
               {[25, 50, 75, 90, 100].map((pct) => {
                 const achieved = netWorthProgress?.milestones_achieved?.some(m => m.percent === pct)
                 const isCurrent = netWorthProgress?.next_milestone?.percent === pct
-                const milestoneAmount = (DEFAULT_NET_WORTH_GOAL * pct) / 100
+                const milestoneAmount = (currentNetWorthGoal * pct) / 100
 
                 return (
                   <Box
@@ -458,40 +658,59 @@ export default function Dashboard() {
               })}
             </Grid>
 
-            {/* Additional Stats */}
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6} mt={8}>
-              <Box
-                p={6}
-                bg="neutral.50"
-                border="2px solid"
-                borderColor="neutral.200"
-                borderRadius="8px"
-              >
-                <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold" mb={2}>
-                  Remaining to Goal
-                </Text>
-                <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight">
-                  ${netWorthProgress?.remaining?.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                </Text>
-              </Box>
-              <Box
-                p={6}
-                bg="neutral.50"
-                border="2px solid"
-                borderColor="neutral.200"
-                borderRadius="8px"
-              >
-                <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold" mb={2}>
-                  Estimated Time to Goal
-                </Text>
-                <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight">
-                  {netWorthProgress?.months_to_goal > 0 ? `${Math.ceil(netWorthProgress.months_to_goal)} months` : 'Calculating...'}
-                </Text>
-              </Box>
-            </Grid>
-          </Container>
-        </Box>
-      )}
+          {/* Additional Stats */}
+          <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6} mt={8}>
+            <Box
+              p={6}
+              bg="neutral.50"
+              border="2px solid"
+              borderColor="neutral.200"
+              borderRadius="8px"
+            >
+              <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold" mb={2}>
+                Remaining to Goal
+              </Text>
+              {netWorthProgress ? (
+                <>
+                  <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight">
+                    ${netWorthProgress?.remaining?.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                  </Text>
+                  <Text fontSize="sm" color="neutral.600" mt={2}>
+                    Next goal: ${getNextGoalAfterCurrent(currentNetWorthGoal).toLocaleString('en-US')}
+                  </Text>
+                </>
+              ) : (
+                <Skeleton height="36px" width="150px" />
+              )}
+            </Box>
+            <Box
+              p={6}
+              bg="neutral.50"
+              border="2px solid"
+              borderColor="neutral.200"
+              borderRadius="8px"
+            >
+              <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold" mb={2}>
+                Estimated Time to Goal
+              </Text>
+              {netWorthProgress ? (
+                <>
+                  <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight">
+                    {netWorthProgress?.months_to_goal > 0 ? `${Math.ceil(netWorthProgress.months_to_goal)} months` : 'Calculating...'}
+                  </Text>
+                  {netWorthProgress?.months_to_goal > 0 && netWorthProgress?.remaining > 0 && (
+                    <Text fontSize="sm" color="neutral.600" mt={2}>
+                      at ${Math.round(netWorthProgress.remaining / netWorthProgress.months_to_goal).toLocaleString('en-US')}/month
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <Skeleton height="36px" width="120px" />
+              )}
+            </Box>
+          </Grid>
+        </Container>
+      </Box>
 
       {/* ANOMALIES SECTION */}
       {data?.recent_anomalies && data.recent_anomalies.length > 0 && (

@@ -100,3 +100,71 @@ class NetWorthGoalProgress(BaseModel):
     on_track: bool
     next_milestone: Optional[dict] = None
     milestones_achieved: List[dict]
+
+
+# Time Machine Models
+class TimeMachineScenario(BaseModel):
+    """User-adjustable parameters for the what-if simulator"""
+    # Category spending adjustments (percentage change, e.g., -20 means 20% reduction)
+    restaurants_adjustment: float = 0
+    groceries_adjustment: float = 0
+    shopping_adjustment: float = 0
+    entertainment_adjustment: float = 0
+    transportation_adjustment: float = 0
+    subscriptions_adjustment: float = 0
+    other_adjustment: float = 0
+
+    # Income adjustment
+    income_adjustment: float = 0
+
+    # Fixed costs
+    rent_adjustment: float = 0
+
+    # Savings rate (if provided, overrides calculated)
+    target_savings_rate: Optional[float] = None
+
+    # Investment parameters
+    investment_return_rate: float = 7.0  # Annual return %
+    inflation_rate: float = 3.0  # Annual inflation %
+
+    # Goals
+    emergency_fund_target: float = 10000
+    retirement_goal: float = 500000
+
+
+class TimeMachineProjection(BaseModel):
+    """Projection results from the Time Machine"""
+    # Current baseline
+    current_monthly_income: float
+    current_monthly_expenses: float
+    current_monthly_savings: float
+    current_savings_rate: float
+
+    # What-if scenario
+    scenario_monthly_income: float
+    scenario_monthly_expenses: float
+    scenario_monthly_savings: float
+    scenario_savings_rate: float
+
+    # Differences
+    savings_difference: float
+    savings_difference_percent: float
+
+    # Category breakdown (current vs scenario)
+    category_comparison: List[dict]
+
+    # 12-month projections
+    projection_months: List[dict]
+
+    # Emergency fund
+    current_emergency_fund_months: float
+    scenario_emergency_fund_months: float
+    months_to_emergency_fund_goal: Optional[float]
+
+    # Investment growth (simple projection)
+    investment_growth_projection: List[dict]
+
+    # Goal progress
+    current_time_to_goal: Optional[float]
+    scenario_time_to_goal: Optional[float]
+    goal_time_saved: Optional[float]

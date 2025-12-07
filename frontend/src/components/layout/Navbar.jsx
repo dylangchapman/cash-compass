@@ -14,7 +14,7 @@ import {
   Avatar,
 } from '@chakra-ui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { MdPerson, MdLogout, MdChevronRight, MdPrivacyTip } from 'react-icons/md'
+import { MdPerson, MdLogout, MdChevronRight, MdPrivacyTip, MdFlag } from 'react-icons/md'
 
 const NavLink = ({ to, children }) => {
   const location = useLocation()
@@ -86,86 +86,99 @@ export default function Navbar() {
               color="neutral.900"
               letterSpacing="tighter"
             >
-              Financial Coach
+              CashCompass
             </Text>
           </Box>
 
           {/* Navigation */}
           <Flex align="center" gap={2}>
-            {isLoggedIn ? (
-              <>
-                <HStack spacing={1} mr={6}>
-                  <NavLink to="/dashboard">Dashboard</NavLink>
-                  <NavLink to="/insights">Insights</NavLink>
-                  <NavLink to="/subscriptions">Subscriptions</NavLink>
-                  <NavLink to="/portfolio">Portfolio</NavLink>
-                  <NavLink to="/coach">Coach</NavLink>
-                </HStack>
+            <HStack spacing={1} mr={6}>
+              <NavLink to="/dashboard">Dashboard</NavLink>
+              <NavLink to="/insights">Insights</NavLink>
+              <NavLink to="/time-machine">Time Machine</NavLink>
+              <NavLink to="/subscriptions">Subscriptions</NavLink>
+              <NavLink to="/portfolio">Portfolio</NavLink>
+              <NavLink to="/coach">Coach</NavLink>
+            </HStack>
 
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    variant="ghost"
-                    size="md"
-                    rightIcon={<MdChevronRight />}
-                    px={3}
+            {isLoggedIn ? (
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  variant="ghost"
+                  size="md"
+                  rightIcon={<MdChevronRight />}
+                  px={3}
+                >
+                  <HStack spacing={3}>
+                    <Avatar size="sm" name={userName} bg="neutral.900" />
+                    <Text fontSize="sm" fontWeight="semibold" color="neutral.900">
+                      {userName.split(' ')[0]}
+                    </Text>
+                  </HStack>
+                </MenuButton>
+                <MenuList
+                  borderRadius="8px"
+                  border="2px solid"
+                  borderColor="neutral.600"
+                  bg="neutral.900"
+                  p={2}
+                  boxShadow="0 10px 40px rgba(0, 0, 0, 0.4)"
+                  minW="200px"
+                >
+                  <MenuItem
+                    icon={<MdFlag />}
+                    as={Link}
+                    to="/goals"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
                   >
-                    <HStack spacing={3}>
-                      <Avatar size="sm" name={userName} bg="neutral.900" />
-                      <Text fontSize="sm" fontWeight="semibold" color="neutral.900">
-                        {userName.split(' ')[0]}
-                      </Text>
-                    </HStack>
-                  </MenuButton>
-                  <MenuList
-                    borderRadius="8px"
-                    border="2px solid"
-                    borderColor="neutral.700"
-                    bg="neutral.800"
-                    p={2}
-                    boxShadow="xl"
+                    Spending Goals
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdPerson />}
+                    as={Link}
+                    to="/settings"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
                   >
-                    <MenuItem
-                      icon={<MdPerson />}
-                      as={Link}
-                      to="/settings"
-                      borderRadius="6px"
-                      fontWeight="medium"
-                      fontSize="sm"
-                      color="white"
-                      bg="transparent"
-                      _hover={{ bg: 'neutral.700' }}
-                    >
-                      Settings
-                    </MenuItem>
-                    <MenuItem
-                      icon={<MdPrivacyTip />}
-                      as={Link}
-                      to="/privacy"
-                      borderRadius="6px"
-                      fontWeight="medium"
-                      fontSize="sm"
-                      color="white"
-                      bg="transparent"
-                      _hover={{ bg: 'neutral.700' }}
-                    >
-                      Privacy Policy
-                    </MenuItem>
-                    <MenuItem
-                      icon={<MdLogout />}
-                      onClick={handleLogout}
-                      borderRadius="6px"
-                      fontWeight="medium"
-                      fontSize="sm"
-                      color="error.300"
-                      bg="transparent"
-                      _hover={{ bg: 'error.900' }}
-                    >
-                      Sign Out
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
-              </>
+                    Settings
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdPrivacyTip />}
+                    as={Link}
+                    to="/privacy"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
+                  >
+                    Privacy Policy
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdLogout />}
+                    onClick={handleLogout}
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="white"
+                    bg="transparent"
+                    _hover={{ bg: 'error.900', color: 'error.300' }}
+                  >
+                    Sign Out
+                  </MenuItem>
+                </MenuList>
+              </Menu>
             ) : (
               <Button
                 as={Link}

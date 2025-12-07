@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Text,
@@ -14,16 +13,27 @@ import {
   Container,
   Button,
   useToast,
+  Skeleton,
+  SkeletonText,
 } from '@chakra-ui/react'
-import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdChevronRight, MdFlag, MdCheckCircle, MdWarning } from 'react-icons/md'
+import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdFlag, MdCheckCircle, MdWarning } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
+import LoginPrompt from '../components/LoginPrompt'
 
 const DEFAULT_GOALS = [
   { goal_name: 'Monthly Spending Limit', target: 2500, category: null },
   { goal_name: 'Groceries Budget', target: 400, category: 'Groceries' },
   { goal_name: 'Dining Out Budget', target: 150, category: 'Restaurants' },
 ]
+
+const CACHE_KEYS = {
+  AI_INSIGHTS: 'cached_spending_ai_insights',
+  GOAL_RESULTS: 'cached_goal_results',
+  GOAL_AI_INSIGHTS: 'cached_goal_ai_insights',
+}
+
+const DEFAULT_AI_MESSAGE = "Analyzing your spending patterns... Your personalized insights will appear here shortly."
 
 const TrendIcon = ({ trend }) => {
   const config = {
@@ -37,21 +47,73 @@ const TrendIcon = ({ trend }) => {
   return <Icon as={icon} color={color} boxSize={5} />
 }
 
+// Helper to safely get cached data
+const getCached = (key) => {
+  try {
+    const cached = localStorage.getItem(key)
+    return cached ? JSON.parse(cached) : null
+  } catch {
+    return null
+  }
+}
+
+// Helper to cache data
+const setCache = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export default function SpendingInsights() {
-  const navigate = useNavigate()
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   const toast = useToast()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [insights, setInsights] = useState(null)
+
+  // Analytics loading state (fast - blocks page)
+  const [analyticsLoading, setAnalyticsLoading] = useState(true)
+  const [analyticsError, setAnalyticsError] = useState(null)
+  const [analytics, setAnalytics] = useState(null)
+
+  // AI insights loading state (slow - loads async with cache)
+  const [aiInsights, setAiInsights] = useState(() => getCached(CACHE_KEYS.AI_INSIGHTS) || DEFAULT_AI_MESSAGE)
+
+  if (!isLoggedIn) {
+    return (
+      <LoginPrompt
+        title="Spending Insights"
+        description="Sign in to view AI-powered analysis of your spending patterns, track goals, and get personalized recommendations."
+      />
+    )
+  }
 
   // Goal analysis state
   const [analyzing, setAnalyzing] = useState(false)
-  const [goalResults, setGoalResults] = useState(null)
-  const [goalAiInsights, setGoalAiInsights] = useState(null)
+  const [goalResults, setGoalResults] = useState(() => getCached(CACHE_KEYS.GOAL_RESULTS))
+  const [goalAiInsights, setGoalAiInsights] = useState(() => getCached(CACHE_KEYS.GOAL_AI_INSIGHTS))
+
+  // Load analytics data (fast endpoint)
+  const loadAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true)
+      const result = await financialAPI.getSpendingInsights()
+      setAnalytics(result.analytics)
+
+      // If we got AI insights, update them
+      if (result.ai_insights) {
+        setAiInsights(result.ai_insights)
+        setCache(CACHE_KEYS.AI_INSIGHTS, result.ai_insights)
+      }
+    } catch (err) {
+      setAnalyticsError(err.message)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    loadInsights()
-  }, [])
+    loadAnalytics()
+  }, [loadAnalytics])
 
   const analyzeGoals = async () => {
     try {
@@ -59,6 +121,9 @@ export default function SpendingInsights() {
       const result = await financialAPI.analyzeGoals(DEFAULT_GOALS)
       setGoalResults(result.goals)
       setGoalAiInsights(result.ai_insights)
+      // Cache the results
+      setCache(CACHE_KEYS.GOAL_RESULTS, result.goals)
+      setCache(CACHE_KEYS.GOAL_AI_INSIGHTS, result.ai_insights)
     } catch (err) {
       toast({ title: 'Error analyzing goals', description: err.message, status: 'error', duration: 5000 })
     } finally {
@@ -66,23 +131,7 @@ export default function SpendingInsights() {
     }
   }
 
-  const handleCategoryClick = (category) => {
-    navigate(`/transactions?category=${encodeURIComponent(category)}`)
-  }
-
-  const loadInsights = async () => {
-    try {
-      setLoading(true)
-      const result = await financialAPI.getSpendingInsights()
-      setInsights(result)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
+  if (analyticsLoading) {
     return (
       <Center h="400px">
         <Spinner size="xl" color="neutral.900" thickness="3px" />
@@ -90,17 +139,14 @@ export default function SpendingInsights() {
     )
   }
 
-  if (error) {
+  if (analyticsError) {
     return (
       <Alert status="error" borderRadius="8px">
         <AlertIcon />
-        Error loading insights: {error}
+        Error loading insights: {analyticsError}
       </Alert>
     )
   }
-
-  const analytics = insights?.analytics
-  const aiInsights = insights?.ai_insights
 
   return (
     <Box bg="white" minH="100vh">
@@ -132,22 +178,36 @@ export default function SpendingInsights() {
             overflow="hidden"
           >
             <Box bg="neutral.900" p={6}>
-              <HStack spacing={3}>
-                <Icon as={MdLightbulb} boxSize={6} color="white" />
-                <Text fontSize="lg" fontWeight="bold" color="white">
-                  AI Financial Analysis
-                </Text>
+              <HStack spacing={3} justify="space-between">
+                <HStack spacing={3}>
+                  <Icon as={MdLightbulb} boxSize={6} color="white" />
+                  <Text fontSize="lg" fontWeight="bold" color="white">
+                    AI Financial Analysis
+                  </Text>
+                </HStack>
+                {aiInsights === DEFAULT_AI_MESSAGE && (
+                  <Spinner size="sm" color="white" />
+                )}
               </HStack>
             </Box>
             <Box p={8}>
-              <Text
-                whiteSpace="pre-wrap"
-                lineHeight="1.8"
-                color="neutral.800"
-                fontSize="md"
-              >
-                {aiInsights}
-              </Text>
+              {aiInsights === DEFAULT_AI_MESSAGE ? (
+                <VStack align="stretch" spacing={3}>
+                  <SkeletonText noOfLines={4} spacing={4} skeletonHeight={4} />
+                  <Text fontSize="sm" color="neutral.500" fontStyle="italic">
+                    Loading AI analysis...
+                  </Text>
+                </VStack>
+              ) : (
+                <Text
+                  whiteSpace="pre-wrap"
+                  lineHeight="1.8"
+                  color="neutral.800"
+                  fontSize="md"
+                >
+                  {aiInsights}
+                </Text>
+              )}
             </Box>
           </Box>
         </Container>
@@ -285,67 +345,69 @@ export default function SpendingInsights() {
               Spending by Category
             </Text>
             <Text fontSize="lg" color="neutral.600">
-              Click any category to view all transactions
+              Monthly average spending across all your data
             </Text>
           </Box>
 
           <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6}>
-            {analytics?.spending_by_category?.map((category, idx) => (
-              <Box
-                key={idx}
-                bg="white"
-                border="2px solid"
-                borderColor="neutral.200"
-                borderRadius="8px"
-                p={6}
-                cursor="pointer"
-                transition="all 0.2s"
-                _hover={{
-                  borderColor: 'neutral.900',
-                  transform: 'translateY(-2px)',
-                  shadow: 'lg',
-                }}
-                onClick={() => handleCategoryClick(category.category)}
-              >
-                <HStack justify="space-between" mb={4}>
-                  <HStack spacing={3}>
-                    <Box
-                      w={4}
-                      h={4}
-                      borderRadius="4px"
-                      bg={`hsl(${(idx * 360) / analytics.spending_by_category.length}, 70%, 55%)`}
-                    />
-                    <Text fontWeight="bold" fontSize="lg" color="neutral.900">
-                      {category.category}
+            {analytics?.spending_by_category?.map((category, idx) => {
+              // Calculate monthly average from total
+              const monthsOfData = analytics?.trends?.[0]?.monthly_data?.length || 6
+              const monthlyAvg = category.total / monthsOfData
+
+              return (
+                <Box
+                  key={idx}
+                  bg="white"
+                  border="2px solid"
+                  borderColor="neutral.200"
+                  borderRadius="8px"
+                  p={6}
+                >
+                  <HStack justify="space-between" mb={4}>
+                    <HStack spacing={3}>
+                      <Box
+                        w={4}
+                        h={4}
+                        borderRadius="4px"
+                        bg={`hsl(${(idx * 360) / analytics.spending_by_category.length}, 70%, 55%)`}
+                      />
+                      <Text fontWeight="bold" fontSize="lg" color="neutral.900">
+                        {category.category}
+                      </Text>
+                    </HStack>
+                  </HStack>
+
+                  <HStack align="baseline" spacing={1} mb={2}>
+                    <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight">
+                      ${monthlyAvg?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </Text>
+                    <Text fontSize="lg" fontWeight="medium" color="neutral.500">
+                      /mo
                     </Text>
                   </HStack>
-                  <Icon as={MdChevronRight} boxSize={6} color="neutral.400" />
-                </HStack>
 
-                <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tight" mb={2}>
-                  ${category.total?.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </Text>
-
-                <HStack justify="space-between" align="center">
-                  <HStack spacing={2}>
-                    <TrendIcon trend={category.trend} />
-                    {category.change_percent && (
-                      <Text
-                        fontSize="sm"
-                        fontWeight="semibold"
-                        color={category.change_percent > 0 ? 'error.600' : 'success.600'}
-                      >
-                        {category.change_percent > 0 ? '+' : ''}
-                        {category.change_percent.toFixed(1)}%
-                      </Text>
-                    )}
+                  <HStack justify="space-between" align="center">
+                    <HStack spacing={2}>
+                      <TrendIcon trend={category.trend} />
+                      {category.change_percent && (
+                        <Text
+                          fontSize="sm"
+                          fontWeight="semibold"
+                          color={category.change_percent > 0 ? 'error.600' : 'success.600'}
+                        >
+                          {category.change_percent > 0 ? '+' : ''}
+                          {category.change_percent.toFixed(1)}%
+                        </Text>
+                      )}
+                    </HStack>
+                    <StatusBadge status="neutral">
+                      {category.percentage?.toFixed(1)}% of total
+                    </StatusBadge>
                   </HStack>
-                  <StatusBadge status="neutral">
-                    {category.percentage?.toFixed(1)}% of total
-                  </StatusBadge>
-                </HStack>
-              </Box>
-            ))}
+                </Box>
+              )
+            })}
           </Grid>
         </Container>
       </Box>
@@ -378,13 +440,6 @@ export default function SpendingInsights() {
                   borderColor="warning.300"
                   borderRadius="8px"
                   p={6}
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  _hover={{
-                    borderColor: 'warning.500',
-                    shadow: 'md',
-                  }}
-                  onClick={() => handleCategoryClick(anomaly.category)}
                 >
                   <HStack justify="space-between" align="start">
                     <VStack align="start" spacing={2} flex={1}>
@@ -422,6 +477,7 @@ export default function SpendingInsights() {
           </Container>
         </Box>
       )}
+
     </Box>
   )
 }

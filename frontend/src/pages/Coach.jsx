@@ -13,8 +13,6 @@ import {
   Flex,
   InputGroup,
   InputRightElement,
-  Alert,
-  AlertIcon,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -25,6 +23,7 @@ import {
 } from '@chakra-ui/react'
 import { MdSend, MdInfo, MdDelete, MdWarning } from 'react-icons/md'
 import { financialAPI } from '../services/api'
+import LoginPrompt from '../components/LoginPrompt'
 
 const SUGGESTED_QUESTIONS = [
   "How can I save more money?",
@@ -32,29 +31,72 @@ const SUGGESTED_QUESTIONS = [
   "Am I spending too much on subscriptions?",
   "Help me create a budget",
   "How can I reduce my grocery spending?",
-  "What should I invest my cash in?"
+  "What should I invest my cash in?",
+  "How can I improve my credit score?",
+  "What financial goals should I set?",
+  "What are some tips for paying off debt?",
+  "How can I plan for retirement?",
 ]
 
-export default function Coach() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: "Hello. I've analyzed your spending patterns and am ready to provide personalized financial guidance. How can I assist you today?",
-      timestamp: new Date(),
+const CACHE_KEY = 'cached_coach_messages'
+const DEFAULT_MESSAGE = {
+  role: 'assistant',
+  content: "Hello. I've analyzed your spending patterns and am ready to provide personalized financial guidance. How can I assist you today?",
+  timestamp: new Date().toISOString(),
+}
+
+// Helper to safely get cached messages
+const getCachedMessages = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) {
+      const messages = JSON.parse(cached)
+      // Convert timestamp strings back to Date objects
+      return messages.map(m => ({ ...m, timestamp: new Date(m.timestamp) }))
     }
-  ])
+  } catch {
+    // Ignore errors
+  }
+  return [{ ...DEFAULT_MESSAGE, timestamp: new Date() }]
+}
+
+// Helper to cache messages
+const cacheMessages = (messages) => {
+  try {
+    // Convert Date objects to strings for storage
+    const toCache = messages.map(m => ({ ...m, timestamp: m.timestamp.toISOString() }))
+    localStorage.setItem(CACHE_KEY, JSON.stringify(toCache))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export default function Coach() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const [messages, setMessages] = useState(() => getCachedMessages())
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
   const toast = useToast()
   const clearHistoryModal = useDisclosure()
 
+  if (!isLoggedIn) {
+    return (
+      <LoginPrompt
+        title="Financial Coach"
+        description="Sign in to chat with your AI-powered financial coach and get personalized advice based on your spending patterns."
+      />
+    )
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Scroll to bottom and cache messages when they change
   useEffect(() => {
     scrollToBottom()
+    cacheMessages(messages)
   }, [messages])
 
   const sendMessage = async (messageText = null) => {
@@ -119,13 +161,20 @@ export default function Coach() {
   }
 
   const handleClearHistory = () => {
-    setMessages([
+    const clearedMessages = [
       {
         role: 'assistant',
         content: "Chat history cleared. How can I help you today?",
         timestamp: new Date(),
       }
-    ])
+    ]
+    setMessages(clearedMessages)
+    // Clear the cache
+    try {
+      localStorage.removeItem(CACHE_KEY)
+    } catch {
+      // Ignore errors
+    }
     clearHistoryModal.onClose()
     toast({
       title: 'Chat history cleared',
@@ -300,32 +349,35 @@ export default function Coach() {
       </Box>
 
       {/* Clear History Modal */}
-      <Modal isOpen={clearHistoryModal.isOpen} onClose={clearHistoryModal.onClose}>
-        <ModalOverlay bg="blackAlpha.700" />
+      <Modal isOpen={clearHistoryModal.isOpen} onClose={clearHistoryModal.onClose} isCentered>
+        <ModalOverlay bg="blackAlpha.800" />
         <ModalContent
-          bg="neutral.800"
+          bg="neutral.900"
           border="2px solid"
-          borderColor="neutral.700"
+          borderColor="neutral.600"
           borderRadius="8px"
+          boxShadow="0 10px 40px rgba(0, 0, 0, 0.5)"
         >
-          <ModalHeader color="white">Clear Chat History</ModalHeader>
-          <ModalBody>
+          <ModalHeader color="white" borderBottom="1px solid" borderColor="neutral.700" pb={4}>
+            Clear Chat History
+          </ModalHeader>
+          <ModalBody py={6}>
             <VStack align="stretch" spacing={4}>
-              <HStack spacing={3} color="warning.400">
-                <Icon as={MdWarning} boxSize={6} />
-                <Text fontWeight="semibold" color="warning.400">This will delete all messages</Text>
+              <HStack spacing={3}>
+                <Icon as={MdWarning} boxSize={6} color="warning.400" />
+                <Text fontWeight="semibold" color="white">This will delete all messages</Text>
               </HStack>
-              <Text color="neutral.300">
+              <Text color="neutral.200">
                 Your conversation history will be permanently deleted. This action cannot be undone.
               </Text>
             </VStack>
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter borderTop="1px solid" borderColor="neutral.700" pt={4}>
             <Button
               variant="ghost"
               mr={3}
               onClick={clearHistoryModal.onClose}
-              color="neutral.300"
+              color="neutral.200"
               _hover={{ bg: 'neutral.700', color: 'white' }}
             >
               Cancel
