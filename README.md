@@ -47,6 +47,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 ```
+Note: This is crucial, if the environment does not have an API key the LLM functions will not work!
 
 5. Add your OpenAI API key to `.env`:
 ```
