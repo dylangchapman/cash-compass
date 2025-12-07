@@ -107,6 +107,12 @@ export default function Portfolio() {
   const [customStocks, setCustomStocks] = useState(60)
   const [customBonds, setCustomBonds] = useState(40)
 
+  // Holdings expand state
+  const [holdingsExpanded, setHoldingsExpanded] = useState(false)
+
+  // Portfolio AI insight
+  const [portfolioInsight, setPortfolioInsight] = useState(null)
+
   useEffect(() => {
     loadPortfolio()
   }, [])
@@ -116,6 +122,13 @@ export default function Portfolio() {
       setLoading(true)
       const data = await financialAPI.getPortfolio()
       setPortfolio(data)
+
+      // Load portfolio insight async
+      financialAPI.getPortfolioInsight().then(result => {
+        setPortfolioInsight(result.insight)
+      }).catch(() => {
+        // Silently fail
+      })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -322,38 +335,116 @@ export default function Portfolio() {
         </Container>
       </Box>
 
-      {/* ALLOCATION SECTION */}
+      {/* HOLDINGS & ALLOCATION SECTION */}
       <Box py={24} bg="white">
         <Container maxW="1400px">
-          <SectionHeader title="Asset allocation" description="Diversification across investment types" />
+          <SectionHeader title="Holdings & Allocation" description="Your positions and portfolio diversification" />
 
-          <Grid templateColumns={{ base: '1fr', lg: '1fr 1.5fr' }} gap={12} mt={12}>
-            <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" p={8}>
-              <ResponsiveContainer width="100%" height={400}>
-                <PieChart>
-                  <Pie
-                    data={allocationData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={{ position: 'inside', formatter: (entry) => `${((entry.value / portfolio.total_value) * 100).toFixed(1)}%`, fill: '#ffffff', fontSize: 14, fontWeight: 700 }}
-                    outerRadius={140}
-                    fill="#18181b"
-                    dataKey="value"
-                  >
-                    {allocationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={ALLOCATION_COLORS[entry.key]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px', padding: '12px 16px' }} formatter={(value) => `$${value.toLocaleString()}`} labelStyle={{ color: '#ffffff', fontWeight: 600 }} itemStyle={{ color: '#ffffff', fontWeight: 600 }} />
-                </PieChart>
-              </ResponsiveContainer>
+          {/* AI Portfolio Insight */}
+          {portfolioInsight && (
+            <Box
+              bg="neutral.900"
+              borderRadius="8px"
+              p={5}
+              mt={8}
+              position="relative"
+              overflow="hidden"
+            >
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                h="2px"
+                bgGradient="linear(to-r, blue.400, purple.500, pink.400)"
+              />
+              <HStack spacing={3} align="start">
+                <Icon as={MdShowChart} boxSize={5} color="blue.300" mt={0.5} />
+                <Text color="white" fontSize="sm" lineHeight="1.6">
+                  {portfolioInsight}
+                </Text>
+              </HStack>
+            </Box>
+          )}
+
+          <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={8} mt={8} alignItems="start">
+            {/* Holdings Table */}
+            <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" overflow="hidden">
+              <Box overflowX="auto">
+                <Table size="sm" variant="simple">
+                  <Thead bg="neutral.50">
+                    <Tr>
+                      <Th py={3} fontSize="xs">Symbol</Th>
+                      <Th py={3} fontSize="xs">Name</Th>
+                      <Th py={3} fontSize="xs" isNumeric>Shares</Th>
+                      <Th py={3} fontSize="xs" isNumeric>Price</Th>
+                      <Th py={3} fontSize="xs" isNumeric>Value</Th>
+                      <Th py={3} fontSize="xs" isNumeric>Return</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {(holdingsExpanded ? portfolio?.holdings : portfolio?.holdings?.slice(0, 4))?.map((holding, idx) => {
+                      const isGain = holding.gain_loss >= 0
+                      return (
+                        <Tr key={idx} _hover={{ bg: 'neutral.50' }}>
+                          <Td py={2} fontWeight="bold" fontSize="sm" color="neutral.900">{holding.symbol}</Td>
+                          <Td py={2} fontSize="xs" color="neutral.600" maxW="120px" isTruncated>{holding.name}</Td>
+                          <Td py={2} isNumeric fontSize="sm" color="neutral.700">{holding.shares}</Td>
+                          <Td py={2} isNumeric fontSize="sm" color="neutral.700">${holding.current_price.toFixed(2)}</Td>
+                          <Td py={2} isNumeric fontWeight="semibold" fontSize="sm" color="neutral.900">${holding.current_value.toFixed(0)}</Td>
+                          <Td py={2} isNumeric fontWeight="semibold" fontSize="sm" color={isGain ? 'success.600' : 'error.600'}>
+                            {isGain ? '+' : ''}{holding.gain_loss_percent.toFixed(1)}%
+                          </Td>
+                        </Tr>
+                      )
+                    })}
+                  </Tbody>
+                </Table>
+              </Box>
+              {portfolio?.holdings?.length > 4 && (
+                <Box
+                  py={2}
+                  textAlign="center"
+                  borderTop="1px solid"
+                  borderColor="neutral.100"
+                  cursor="pointer"
+                  _hover={{ bg: 'neutral.50' }}
+                  onClick={() => setHoldingsExpanded(!holdingsExpanded)}
+                >
+                  <Text fontSize="sm" fontWeight="semibold" color="neutral.500">
+                    {holdingsExpanded ? 'Show less' : `... ${portfolio.holdings.length - 4} more positions`}
+                  </Text>
+                </Box>
+              )}
             </Box>
 
-            <VStack align="stretch" spacing={4}>
-              <AllocationCard title="Stocks" percent={portfolio?.allocation.stocks.percent.toFixed(1)} value={portfolio?.allocation.stocks.value} color={ALLOCATION_COLORS.stocks} />
-              <AllocationCard title="ETFs" percent={portfolio?.allocation.etfs.percent.toFixed(1)} value={portfolio?.allocation.etfs.value} color={ALLOCATION_COLORS.etfs} />
-              <AllocationCard title="Bonds" percent={portfolio?.allocation.bonds.percent.toFixed(1)} value={portfolio?.allocation.bonds.value} color={ALLOCATION_COLORS.bonds} />
+            {/* Allocation Chart & Cards */}
+            <VStack align="stretch" spacing={3}>
+              <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" p={3}>
+                <ResponsiveContainer width="100%" height={140}>
+                  <PieChart>
+                    <Pie
+                      data={allocationData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={{ position: 'inside', formatter: (entry) => `${((entry.value / portfolio.total_value) * 100).toFixed(0)}%`, fill: '#ffffff', fontSize: 11, fontWeight: 700 }}
+                      outerRadius={60}
+                      fill="#18181b"
+                      dataKey="value"
+                    >
+                      {allocationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={ALLOCATION_COLORS[entry.key]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '6px', padding: '8px 12px' }} formatter={(value) => `$${value.toLocaleString()}`} labelStyle={{ color: '#ffffff', fontWeight: 600 }} itemStyle={{ color: '#ffffff', fontWeight: 600 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+
+              <CompactAllocationCard title="Stocks" percent={portfolio?.allocation.stocks.percent.toFixed(1)} value={portfolio?.allocation.stocks.value} color={ALLOCATION_COLORS.stocks} />
+              <CompactAllocationCard title="ETFs" percent={portfolio?.allocation.etfs.percent.toFixed(1)} value={portfolio?.allocation.etfs.value} color={ALLOCATION_COLORS.etfs} />
+              <CompactAllocationCard title="Bonds" percent={portfolio?.allocation.bonds.percent.toFixed(1)} value={portfolio?.allocation.bonds.value} color={ALLOCATION_COLORS.bonds} />
             </VStack>
           </Grid>
         </Container>
@@ -648,52 +739,6 @@ export default function Portfolio() {
         </Container>
       </Box>
 
-      {/* HOLDINGS TABLE */}
-      <Box py={24} bg="white" borderTop="1px solid" borderColor="neutral.200">
-        <Container maxW="1400px">
-          <SectionHeader title="Holdings" description="Your current equity positions" />
-
-          <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" overflow="hidden" mt={12}>
-            <Box overflowX="auto">
-              <Table variant="simple">
-                <Thead bg="neutral.50">
-                  <Tr>
-                    <Th>Symbol</Th>
-                    <Th>Name</Th>
-                    <Th isNumeric>Shares</Th>
-                    <Th isNumeric>Cost Basis</Th>
-                    <Th isNumeric>Current Price</Th>
-                    <Th isNumeric>Market Value</Th>
-                    <Th isNumeric>Gain/Loss</Th>
-                    <Th isNumeric>Return</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {portfolio?.holdings?.map((holding, idx) => {
-                    const isGain = holding.gain_loss >= 0
-                    return (
-                      <Tr key={idx} _hover={{ bg: 'neutral.50' }} transition="background 0.15s">
-                        <Td fontWeight="bold" fontSize="md" color="neutral.900">{holding.symbol}</Td>
-                        <Td fontSize="sm" color="neutral.700" fontWeight="medium">{holding.name}</Td>
-                        <Td isNumeric fontSize="sm" color="neutral.800">{holding.shares}</Td>
-                        <Td isNumeric fontSize="sm" color="neutral.800">${holding.cost_basis.toFixed(2)}</Td>
-                        <Td isNumeric fontSize="sm" fontWeight="semibold" color="neutral.900">${holding.current_price.toFixed(2)}</Td>
-                        <Td isNumeric fontWeight="bold" fontSize="md" color="neutral.900">${holding.current_value.toFixed(2)}</Td>
-                        <Td isNumeric fontWeight="bold" fontSize="md" color={isGain ? 'success.700' : 'error.700'}>
-                          {isGain ? '+' : ''}${holding.gain_loss.toFixed(2)}
-                        </Td>
-                        <Td isNumeric fontWeight="bold" fontSize="md" color={isGain ? 'success.700' : 'error.700'}>
-                          {isGain ? '+' : ''}{holding.gain_loss_percent.toFixed(2)}%
-                        </Td>
-                      </Tr>
-                    )
-                  })}
-                </Tbody>
-              </Table>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
     </Box>
   )
 }
@@ -1060,6 +1105,23 @@ function AllocationCard({ title, percent, value, color }) {
         <Box textAlign="right">
           <Text fontSize="4xl" fontWeight="black" color={color} letterSpacing="tighter">{percent}%</Text>
         </Box>
+      </Flex>
+    </Box>
+  )
+}
+
+function CompactAllocationCard({ title, percent, value, color }) {
+  return (
+    <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" p={4} transition="all 0.2s" _hover={{ borderColor: color }}>
+      <Flex justify="space-between" align="center">
+        <HStack spacing={3}>
+          <Box w="3px" h="32px" bg={color} borderRadius="2px" />
+          <Box>
+            <Text fontSize="sm" fontWeight="bold" color="neutral.900">{title}</Text>
+            <Text fontSize="sm" color="neutral.600">${value?.toLocaleString('en-US', { minimumFractionDigits: 0 })}</Text>
+          </Box>
+        </HStack>
+        <Text fontSize="xl" fontWeight="black" color={color}>{percent}%</Text>
       </Flex>
     </Box>
   )

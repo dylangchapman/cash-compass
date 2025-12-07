@@ -190,6 +190,42 @@ class FinancialCoachAI:
             for a in anomalies[:5]
         ])
 
+    def generate_portfolio_insight(self, allocation: Dict, holdings: List[Dict]) -> str:
+        """Generate a brief 2-3 sentence insight about portfolio allocation"""
+
+        stocks_pct = allocation.get('stocks', {}).get('percent', 0)
+        etfs_pct = allocation.get('etfs', {}).get('percent', 0)
+        bonds_pct = allocation.get('bonds', {}).get('percent', 0)
+
+        holdings_summary = ", ".join([f"{h['symbol']} (${h['current_value']:.0f})" for h in holdings[:5]])
+
+        system_prompt = """You are a concise financial advisor. Provide exactly 2-3 sentences about the user's investment allocation.
+                        Focus on risk/reward balance and one key observation. Be direct and insightful, not generic.
+                        Do not use bullet points or lists. Write in flowing prose."""
+
+        user_prompt = f"""Portfolio allocation:
+- Stocks: {stocks_pct:.1f}%
+- ETFs: {etfs_pct:.1f}%
+- Bonds: {bonds_pct:.1f}%
+
+Top holdings: {holdings_summary}
+
+Provide a 2-3 sentence insight about this allocation's risk profile and one specific observation."""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=150
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"Unable to generate portfolio insight: {str(e)}"
+
     def _extract_suggestions(self, text: str) -> List[str]:
         """ extract suggestions from AI response """
         suggestions = []

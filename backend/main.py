@@ -127,6 +127,38 @@ def get_subscription_insights():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/insights/income")
+def get_income_insights():
+    """Get income sources breakdown"""
+    try:
+        income_data = analytics.get_income_breakdown()
+        savings_data = analytics.get_savings_summary()
+        return {
+            "income": income_data,
+            "savings": savings_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/insights/portfolio")
+def get_portfolio_insight():
+    """Get AI-generated portfolio allocation insight"""
+    try:
+        portfolio = portfolio_service.get_portfolio_summary()
+        insight = ai_service.generate_portfolio_insight(
+            portfolio['allocation'],
+            portfolio['holdings']
+        )
+        return {
+            "insight": insight,
+            "allocation": portfolio['allocation'],
+            "total_value": portfolio['total_value']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/insights/scoring")
 def get_heuristic_scoring():
     """Get full heuristic scoring output with merchant features and annotated transactions"""

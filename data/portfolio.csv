@@ -1,5 +1,6 @@
 symbol,shares,purchase_price,purchase_date,notes
 AAPL,15,150.25,2024-01-15,Apple Inc. - Long term hold
+SNDK,10,230.25,2025-11-10,Sandisk Inc. - Speculation
 MSFT,10,380.50,2024-02-10,Microsoft - Tech diversification
 GOOGL,8,140.75,2024-03-05,Alphabet - Growth stock
 VTI,25,220.00,2024-01-20,Vanguard Total Market ETF
@@ -7,3 +8,4 @@ VOO,12,425.00,2024-02-15,S&P 500 Index Fund
 NVDA,5,450.00,2024-04-01,NVIDIA - AI growth
 TSLA,7,210.00,2024-03-20,Tesla - High risk/reward
 BND,20,75.50,2024-01-10,Vanguard Bond ETF - Stability
+LITE,10,290.3.25,2025-11-10,Lumentum Holdings. - Speculation

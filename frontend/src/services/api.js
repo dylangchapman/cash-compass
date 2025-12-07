@@ -39,6 +39,18 @@ export const financialAPI = {
     return response.data
   },
 
+  // Income & Savings
+  getIncomeInsights: async () => {
+    const response = await api.get('/api/insights/income')
+    return response.data
+  },
+
+  // Portfolio Insight
+  getPortfolioInsight: async () => {
+    const response = await api.get('/api/insights/portfolio')
+    return response.data
+  },
+
   // Goals
   analyzeGoals: async (goals) => {
     const response = await api.post('/api/insights/goals', goals)

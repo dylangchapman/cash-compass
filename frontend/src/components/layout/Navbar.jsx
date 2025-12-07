@@ -92,14 +92,22 @@ export default function Navbar() {
 
           {/* Navigation */}
           <Flex align="center" gap={2}>
-            <HStack spacing={1} mr={6}>
-              <NavLink to="/dashboard">Dashboard</NavLink>
-              <NavLink to="/insights">Insights</NavLink>
-              <NavLink to="/time-machine">Time Machine</NavLink>
-              <NavLink to="/subscriptions">Subscriptions</NavLink>
-              <NavLink to="/portfolio">Portfolio</NavLink>
-              <NavLink to="/coach">Coach</NavLink>
-            </HStack>
+            {isLoggedIn ? (
+              <>
+                <HStack spacing={1} mr={6}>
+                  <NavLink to="/dashboard">Dashboard</NavLink>
+                  <NavLink to="/insights">Insights</NavLink>
+                  <NavLink to="/time-machine">Time Machine</NavLink>
+                  <NavLink to="/subscriptions">Subscriptions</NavLink>
+                  <NavLink to="/portfolio">Portfolio</NavLink>
+                  <NavLink to="/coach">Coach</NavLink>
+                </HStack>
+            </>
+            ) : (
+              <HStack spacing={1} mr={6}>
+                <NavLink to="/coach">Talk to Coach</NavLink>
+              </HStack>
+            )}
 
             {isLoggedIn ? (
               <Menu>

@@ -712,61 +712,6 @@ export default function Dashboard() {
         </Container>
       </Box>
 
-      {/* ANOMALIES SECTION */}
-      {data?.recent_anomalies && data.recent_anomalies.length > 0 && (
-        <Box py={24} bg="white" borderTop="1px solid" borderColor="neutral.200">
-          <Container maxW="1400px">
-            <SectionHeader
-              title="Unusual activity"
-              description="Transactions that differ from your typical spending patterns"
-            />
-
-            <VStack spacing={4} align="stretch" mt={12}>
-              {data.recent_anomalies.map((anomaly, idx) => (
-                <Box
-                  key={idx}
-                  bg="white"
-                  p={8}
-                  border="2px solid"
-                  borderColor="warning.300"
-                  borderRadius="8px"
-                  transition="all 0.2s"
-                  _hover={{
-                    borderColor: 'warning.600',
-                    transform: 'translateY(-2px)',
-                  }}
-                >
-                  <Flex justify="space-between" align="start">
-                    <VStack align="start" spacing={3}>
-                      <HStack spacing={3}>
-                        <Text fontSize="xl" fontWeight="bold" color="neutral.900">
-                          {anomaly.merchant}
-                        </Text>
-                        <Box bg="warning.100" px={3} py={1} borderRadius="4px">
-                          <Text fontSize="xs" fontWeight="bold" color="warning.800" textTransform="uppercase" letterSpacing="wide">
-                            Unusual
-                          </Text>
-                        </Box>
-                      </HStack>
-                      <Text fontSize="sm" color="neutral.600" fontWeight="medium">
-                        {anomaly.date} • {anomaly.category}
-                      </Text>
-                      {anomaly.note && (
-                        <Text fontSize="sm" color="neutral.700" mt={2}>
-                          {anomaly.note}
-                        </Text>
-                      )}
-                    </VStack>
-                    <Text fontSize="4xl" fontWeight="black" color="warning.600" letterSpacing="tighter">
-                      ${anomaly.amount?.toFixed(2)}
-                    </Text>
-                  </Flex>
-                </Box>
-              ))}
-            </VStack>
-          </Container>
-        </Box>
-      )}
     </Box>
   )
 }

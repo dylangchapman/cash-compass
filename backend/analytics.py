@@ -48,6 +48,13 @@ KNOWN_BRANDS = {
     'costco', 'hulu', 'disney', 'hbo', 'gym membership', 'trader joe'
 }
 
+# Categories to exclude from subscription detection
+EXCLUDED_CATEGORIES = {
+    'rent', 'housing', 'utilities', 'income',
+    'groceries', 'grocery', 'transportation', 'gas',
+    'restaurants', 'food', 'coffee', 'dining'
+}
+
 
 def normalize_merchant(merchant: str) -> str:
     """Normalize merchant name for matching"""
@@ -326,6 +333,10 @@ class FinancialAnalytics:
     def compute_subscription_score(self, row: pd.Series) -> int:
         """Compute subscription score for a merchant"""
         score = 0
+
+        # Exclude certain categories from subscription detection
+        if row['category'].lower() in EXCLUDED_CATEGORIES:
+            return 0
 
         # +2 if num_txns >= 3
         if row['num_txns'] >= SUB_MIN_TXNS:
@@ -620,6 +631,99 @@ class FinancialAnalytics:
             "status": status,
             "forecast": forecast,
             "trend": trend
+        }
+
+    def get_income_breakdown(self) -> Dict:
+        """Get breakdown of income sources"""
+        if self.df.empty:
+            return {"sources": [], "total": 0, "monthly_avg": 0}
+
+        income_df = self.df[self.df['type'] == 'credit'].copy()
+        if income_df.empty:
+            return {"sources": [], "total": 0, "monthly_avg": 0}
+
+        # Group by merchant (income source)
+        source_totals = income_df.groupby('merchant')['amount'].agg(['sum', 'count', 'mean']).reset_index()
+        source_totals.columns = ['source', 'total', 'count', 'avg_amount']
+
+        # Calculate months of data
+        months_of_data = len(income_df.groupby('month'))
+
+        # Build source list
+        sources = []
+        for _, row in source_totals.iterrows():
+            monthly_avg = row['total'] / months_of_data if months_of_data > 0 else 0
+            sources.append({
+                "source": row['source'],
+                "total": float(row['total']),
+                "count": int(row['count']),
+                "avg_amount": float(row['avg_amount']),
+                "monthly_avg": float(monthly_avg),
+                "percentage": float(row['total'] / source_totals['total'].sum() * 100)
+            })
+
+        # Sort by total descending
+        sources.sort(key=lambda x: x['total'], reverse=True)
+
+        total_income = float(income_df['amount'].sum())
+        monthly_avg = total_income / months_of_data if months_of_data > 0 else 0
+
+        return {
+            "sources": sources,
+            "total": total_income,
+            "monthly_avg": float(monthly_avg),
+            "months_of_data": months_of_data
+        }
+
+    def get_savings_summary(self) -> Dict:
+        """Get savings analysis"""
+        if self.df.empty:
+            return {}
+
+        income_df = self.df[self.df['type'] == 'credit']
+        expense_df = self.df[self.df['type'] == 'debit']
+
+        total_income = income_df['amount'].sum()
+        total_expenses = expense_df['amount'].sum()
+        total_savings = total_income - total_expenses
+
+        # Monthly breakdown
+        monthly_income = income_df.groupby('month')['amount'].sum()
+        monthly_expenses = expense_df.groupby('month')['amount'].sum()
+
+        # Align indices
+        all_months = sorted(set(monthly_income.index) | set(monthly_expenses.index))
+        monthly_data = []
+
+        for month in all_months:
+            inc = float(monthly_income.get(month, 0))
+            exp = float(monthly_expenses.get(month, 0))
+            sav = inc - exp
+            rate = (sav / inc * 100) if inc > 0 else 0
+            monthly_data.append({
+                "month": str(month),
+                "income": inc,
+                "expenses": exp,
+                "savings": sav,
+                "savings_rate": round(rate, 1)
+            })
+
+        months_of_data = len(all_months)
+        avg_monthly_income = total_income / months_of_data if months_of_data > 0 else 0
+        avg_monthly_expenses = total_expenses / months_of_data if months_of_data > 0 else 0
+        avg_monthly_savings = total_savings / months_of_data if months_of_data > 0 else 0
+        avg_savings_rate = (avg_monthly_savings / avg_monthly_income * 100) if avg_monthly_income > 0 else 0
+
+        return {
+            "total_income": float(total_income),
+            "total_expenses": float(total_expenses),
+            "total_savings": float(total_savings),
+            "avg_monthly_income": float(avg_monthly_income),
+            "avg_monthly_expenses": float(avg_monthly_expenses),
+            "avg_monthly_savings": float(avg_monthly_savings),
+            "avg_savings_rate": round(avg_savings_rate, 1),
+            "months_of_data": months_of_data,
+            "monthly_data": monthly_data
         }
 
     def _empty_summary(self) -> AnalyticsSummary:

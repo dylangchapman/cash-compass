@@ -16,7 +16,7 @@ import {
   Skeleton,
   SkeletonText,
 } from '@chakra-ui/react'
-import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdFlag, MdCheckCircle, MdWarning } from 'react-icons/md'
+import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdFlag, MdCheckCircle, MdWarning, MdAccountBalance, MdSavings, MdAttachMoney, MdShowChart } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
 import LoginPrompt from '../components/LoginPrompt'
@@ -78,6 +78,14 @@ export default function SpendingInsights() {
   // AI insights loading state (slow - loads async with cache)
   const [aiInsights, setAiInsights] = useState(() => getCached(CACHE_KEYS.AI_INSIGHTS) || DEFAULT_AI_MESSAGE)
 
+  // Income and savings state
+  const [incomeData, setIncomeData] = useState(null)
+  const [savingsData, setSavingsData] = useState(null)
+
+  // Portfolio insight state
+  const [portfolioInsight, setPortfolioInsight] = useState(null)
+  const [portfolioAllocation, setPortfolioAllocation] = useState(null)
+
   if (!isLoggedIn) {
     return (
       <LoginPrompt
@@ -96,14 +104,28 @@ export default function SpendingInsights() {
   const loadAnalytics = useCallback(async () => {
     try {
       setAnalyticsLoading(true)
-      const result = await financialAPI.getSpendingInsights()
-      setAnalytics(result.analytics)
+      const [spendingResult, incomeResult] = await Promise.all([
+        financialAPI.getSpendingInsights(),
+        financialAPI.getIncomeInsights()
+      ])
+
+      setAnalytics(spendingResult.analytics)
+      setIncomeData(incomeResult.income)
+      setSavingsData(incomeResult.savings)
 
       // If we got AI insights, update them
-      if (result.ai_insights) {
-        setAiInsights(result.ai_insights)
-        setCache(CACHE_KEYS.AI_INSIGHTS, result.ai_insights)
+      if (spendingResult.ai_insights) {
+        setAiInsights(spendingResult.ai_insights)
+        setCache(CACHE_KEYS.AI_INSIGHTS, spendingResult.ai_insights)
       }
+
+      // Load portfolio insight async (don't block page load)
+      financialAPI.getPortfolioInsight().then(result => {
+        setPortfolioInsight(result.insight)
+        setPortfolioAllocation(result.allocation)
+      }).catch(() => {
+        // Silently fail - portfolio insight is optional
+      })
     } catch (err) {
       setAnalyticsError(err.message)
     } finally {
@@ -159,13 +181,240 @@ export default function SpendingInsights() {
             letterSpacing="tighter"
             mb={4}
           >
-            Spending Insights
+            Financial Insights
           </Text>
           <Text fontSize="xl" color="neutral.400">
-            AI-powered analysis of your spending patterns and trends
+            Income, spending, and savings analysis
           </Text>
         </Container>
       </Box>
+
+      {/* Financial Summary Cards */}
+      {savingsData && (
+        <Box py={12} bg="white">
+          <Container maxW="1400px">
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={6}>
+              {/* Income Card */}
+              <Box
+                bg="success.50"
+                border="2px solid"
+                borderColor="success.500"
+                borderRadius="8px"
+                p={6}
+              >
+                <HStack spacing={3} mb={4}>
+                  <Icon as={MdAttachMoney} boxSize={6} color="success.600" />
+                  <Text fontWeight="bold" fontSize="lg" color="neutral.900">
+                    Monthly Income
+                  </Text>
+                </HStack>
+                <Text fontSize="4xl" fontWeight="black" color="success.700" letterSpacing="tight">
+                  ${savingsData.avg_monthly_income?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </Text>
+                <Text fontSize="sm" color="neutral.600" mt={2}>
+                  Average over {savingsData.months_of_data} months
+                </Text>
+              </Box>
+
+              {/* Expenses Card */}
+              <Box
+                bg="error.50"
+                border="2px solid"
+                borderColor="error.500"
+                borderRadius="8px"
+                p={6}
+              >
+                <HStack spacing={3} mb={4}>
+                  <Icon as={MdTrendingDown} boxSize={6} color="error.600" />
+                  <Text fontWeight="bold" fontSize="lg" color="neutral.900">
+                    Monthly Expenses
+                  </Text>
+                </HStack>
+                <Text fontSize="4xl" fontWeight="black" color="error.700" letterSpacing="tight">
+                  ${savingsData.avg_monthly_expenses?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </Text>
+                <Text fontSize="sm" color="neutral.600" mt={2}>
+                  Average over {savingsData.months_of_data} months
+                </Text>
+              </Box>
+
+              {/* Savings Card */}
+              <Box
+                bg={savingsData.avg_monthly_savings >= 0 ? 'blue.50' : 'warning.50'}
+                border="2px solid"
+                borderColor={savingsData.avg_monthly_savings >= 0 ? 'blue.500' : 'warning.500'}
+                borderRadius="8px"
+                p={6}
+              >
+                <HStack spacing={3} mb={4}>
+                  <Icon as={MdSavings} boxSize={6} color={savingsData.avg_monthly_savings >= 0 ? 'blue.600' : 'warning.600'} />
+                  <Text fontWeight="bold" fontSize="lg" color="neutral.900">
+                    Monthly Savings
+                  </Text>
+                </HStack>
+                <Text fontSize="4xl" fontWeight="black" color={savingsData.avg_monthly_savings >= 0 ? 'blue.700' : 'warning.700'} letterSpacing="tight">
+                  ${Math.abs(savingsData.avg_monthly_savings)?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </Text>
+                <HStack mt={2}>
+                  <StatusBadge status={savingsData.avg_savings_rate >= 20 ? 'success' : savingsData.avg_savings_rate >= 10 ? 'warning' : 'error'}>
+                    {savingsData.avg_savings_rate?.toFixed(1)}% savings rate
+                  </StatusBadge>
+                </HStack>
+              </Box>
+            </Grid>
+          </Container>
+        </Box>
+      )}
+
+      {/* Income Sources Section */}
+      {incomeData && incomeData.sources && incomeData.sources.length > 0 && (
+        <Box py={12} bg="neutral.50" borderTop="1px solid" borderColor="neutral.200">
+          <Container maxW="1400px">
+            <Box mb={8}>
+              <HStack spacing={3} mb={3}>
+                <Icon as={MdAccountBalance} boxSize={8} color="neutral.900" />
+                <Text
+                  fontSize={{ base: '2xl', md: '3xl' }}
+                  fontWeight="black"
+                  color="neutral.900"
+                  letterSpacing="tighter"
+                >
+                  Income Sources
+                </Text>
+              </HStack>
+              <Text fontSize="lg" color="neutral.600">
+                Breakdown of your income streams
+              </Text>
+            </Box>
+
+            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
+              {incomeData.sources.map((source, idx) => (
+                <Box
+                  key={idx}
+                  bg="white"
+                  border="2px solid"
+                  borderColor="neutral.200"
+                  borderRadius="8px"
+                  p={6}
+                >
+                  <HStack justify="space-between" mb={4}>
+                    <Text fontWeight="bold" fontSize="lg" color="neutral.900">
+                      {source.source}
+                    </Text>
+                    <StatusBadge status="success">
+                      {source.percentage?.toFixed(1)}% of income
+                    </StatusBadge>
+                  </HStack>
+
+                  <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                    <Box>
+                      <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold">
+                        Monthly Avg
+                      </Text>
+                      <Text fontSize="2xl" fontWeight="black" color="success.600">
+                        ${source.monthly_avg?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="xs" color="neutral.500" textTransform="uppercase" fontWeight="bold">
+                        Total Earned
+                      </Text>
+                      <Text fontSize="2xl" fontWeight="black" color="neutral.900">
+                        ${source.total?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </Text>
+                    </Box>
+                  </Grid>
+
+                  <Text fontSize="sm" color="neutral.500" mt={3}>
+                    {source.count} payments • ${source.avg_amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} avg per payment
+                  </Text>
+                </Box>
+              ))}
+            </Grid>
+          </Container>
+        </Box>
+      )}
+
+      {/* Portfolio Insight */}
+      {portfolioInsight && (
+        <Box py={8} bg="white" borderTop="1px solid" borderColor="neutral.200">
+          <Container maxW="1400px">
+            <Box
+              bg="neutral.900"
+              borderRadius="8px"
+              p={6}
+              position="relative"
+              overflow="hidden"
+            >
+              {/* Subtle gradient accent */}
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                h="3px"
+                bgGradient="linear(to-r, blue.400, purple.500, pink.400)"
+              />
+
+              <HStack spacing={4} align="start">
+                <Box
+                  bg="whiteAlpha.100"
+                  p={3}
+                  borderRadius="8px"
+                  flexShrink={0}
+                >
+                  <Icon as={MdShowChart} boxSize={6} color="blue.300" />
+                </Box>
+
+                <Box flex={1}>
+                  <HStack justify="space-between" align="start" mb={3}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                      letterSpacing="wide"
+                      color="neutral.400"
+                    >
+                      Investment Allocation
+                    </Text>
+                    {portfolioAllocation && (
+                      <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
+                        <HStack spacing={1}>
+                          <Box w={2} h={2} borderRadius="full" bg="blue.400" />
+                          <Text fontSize="xs" color="neutral.400">
+                            Stocks {portfolioAllocation.stocks?.percent?.toFixed(0)}%
+                          </Text>
+                        </HStack>
+                        <HStack spacing={1}>
+                          <Box w={2} h={2} borderRadius="full" bg="purple.400" />
+                          <Text fontSize="xs" color="neutral.400">
+                            ETFs {portfolioAllocation.etfs?.percent?.toFixed(0)}%
+                          </Text>
+                        </HStack>
+                        <HStack spacing={1}>
+                          <Box w={2} h={2} borderRadius="full" bg="green.400" />
+                          <Text fontSize="xs" color="neutral.400">
+                            Bonds {portfolioAllocation.bonds?.percent?.toFixed(0)}%
+                          </Text>
+                        </HStack>
+                      </HStack>
+                    )}
+                  </HStack>
+
+                  <Text
+                    color="white"
+                    fontSize="md"
+                    lineHeight="1.7"
+                    fontWeight="normal"
+                  >
+                    {portfolioInsight}
+                  </Text>
+                </Box>
+              </HStack>
+            </Box>
+          </Container>
+        </Box>
+      )}
 
       {/* AI Insights */}
       <Box py={12} bg="neutral.50">
@@ -432,7 +681,7 @@ export default function SpendingInsights() {
             </Box>
 
             <Grid gap={4}>
-              {analytics.anomalies.map((anomaly, idx) => (
+              {analytics.anomalies.slice(0, 5).map((anomaly, idx) => (
                 <Box
                   key={idx}
                   bg="white"
