@@ -39,6 +39,45 @@ class Subscription(BaseModel):
     is_gray_charge: bool
     confidence: str
 
+
+class MerchantFeatures(BaseModel):
+    """Per-merchant computed features for subscription detection"""
+    merchant: str
+    merchant_norm: str
+    num_txns: int
+    mean_interval_days: Optional[float] = None
+    std_interval_days: Optional[float] = None
+    amount_mean: float
+    amount_std: float
+    amount_cv: Optional[float] = None
+    active_days: int
+    price_increase_pct: Optional[float] = None
+    category: str
+    subscription_score: int
+    gray_score: int
+    label: str
+    tags: List[str]
+
+
+class AnnotatedTransaction(BaseModel):
+    """Transaction with merchant-level annotations"""
+    date: str
+    merchant: str
+    category: str
+    amount: float
+    type: str
+    notes: Optional[str] = ""
+    label: str
+    merchant_score: int
+    merchant_gray_score: int
+    merchant_tags: List[str]
+
+
+class ScoringOutput(BaseModel):
+    """Full output of the heuristic scoring system"""
+    merchants: List[MerchantFeatures]
+    transactions: List[AnnotatedTransaction]
+
 class AnalyticsSummary(BaseModel):
     total_income: float
     total_expenses: float
