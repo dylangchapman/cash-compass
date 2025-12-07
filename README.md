@@ -150,26 +150,9 @@ npm run dev
 
 The app will be available at `http://localhost:3000`
 
-## API Endpoints
+## Cash Compass Diagram
+![Diagram](CashCompassDiagram.png)
 
-### Core Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/transactions` | GET | Retrieve recent transactions |
-| `/api/dashboard/summary` | GET | Get dashboard summary data |
-| `/api/insights/spending` | GET | Get spending analytics + AI insights |
-| `/api/insights/income` | GET | Get income sources and savings breakdown |
-| `/api/insights/portfolio` | GET | Get AI portfolio risk assessment |
-| `/api/insights/subscriptions` | GET | Detect subscriptions + AI analysis |
-| `/api/insights/scoring` | GET | Get full heuristic scoring output |
-| `/api/insights/goals` | POST | Analyze goal progress + AI recommendations |
-| `/api/portfolio` | GET | Get portfolio holdings and allocation |
-| `/api/portfolio/refresh` | POST | Refresh stock prices |
-| `/api/networth` | GET | Get total net worth |
-| `/api/coach` | POST | Interactive chat with AI coach |
-| `/api/backtest/*` | Various | Backtesting endpoints |
-| `/api/time-machine/*` | Various | Scenario projection endpoints |
 
 ## Heuristic Scoring System
 
