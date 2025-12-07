@@ -210,4 +210,5 @@ AAPL,15,150.25,2024-01-15,Apple Inc. - Long term hold
 VTI,25,220.00,2024-01-20,Vanguard Total Market ETF
 ```
 
+### Contact
 For questions or feedback, reach out @ dchapman.jp@gmail.com
