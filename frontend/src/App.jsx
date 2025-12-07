@@ -27,7 +27,6 @@ function App() {
         <Route path="coach" element={<Coach />} />
         <Route path="goals" element={<Goals />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="account" element={<Settings />} />
         <Route path="privacy" element={<PrivacyPolicy />} />
         <Route path="terms" element={<TermsOfService />} />
       </Route>

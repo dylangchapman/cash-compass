@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime
 from typing import List, Dict, Optional
 from models import (
     Transaction, SpendingInsight, CategoryTrend, Subscription, AnalyticsSummary,

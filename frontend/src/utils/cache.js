@@ -18,11 +18,3 @@ export const setCache = (key, data) => {
     // Ignore storage errors
   }
 }
-
-export const clearCache = (key) => {
-  try {
-    localStorage.removeItem(key)
-  } catch {
-    // Ignore storage errors
-  }
-}
