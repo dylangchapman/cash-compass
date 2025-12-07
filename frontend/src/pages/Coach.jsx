@@ -38,42 +38,15 @@ const SUGGESTED_QUESTIONS = [
   "How can I plan for retirement?",
 ]
 
-const CACHE_KEY = 'cached_coach_messages'
 const DEFAULT_MESSAGE = {
   role: 'assistant',
   content: "Hello. I've analyzed your spending patterns and am ready to provide personalized financial guidance. How can I assist you today?",
-  timestamp: new Date().toISOString(),
-}
-
-// Helper to safely get cached messages
-const getCachedMessages = () => {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY)
-    if (cached) {
-      const messages = JSON.parse(cached)
-      // Convert timestamp strings back to Date objects
-      return messages.map(m => ({ ...m, timestamp: new Date(m.timestamp) }))
-    }
-  } catch {
-    // Ignore errors
-  }
-  return [{ ...DEFAULT_MESSAGE, timestamp: new Date() }]
-}
-
-// Helper to cache messages
-const cacheMessages = (messages) => {
-  try {
-    // Convert Date objects to strings for storage
-    const toCache = messages.map(m => ({ ...m, timestamp: m.timestamp.toISOString() }))
-    localStorage.setItem(CACHE_KEY, JSON.stringify(toCache))
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 export default function Coach() {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
-  const [messages, setMessages] = useState(() => getCachedMessages())
+  // Always start with a fresh message box
+  const [messages, setMessages] = useState([{ ...DEFAULT_MESSAGE, timestamp: new Date() }])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -93,10 +66,9 @@ export default function Coach() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Scroll to bottom and cache messages when they change
+  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom()
-    cacheMessages(messages)
   }, [messages])
 
   const sendMessage = async (messageText = null) => {
@@ -161,20 +133,11 @@ export default function Coach() {
   }
 
   const handleClearHistory = () => {
-    const clearedMessages = [
-      {
-        role: 'assistant',
-        content: "Chat history cleared. How can I help you today?",
-        timestamp: new Date(),
-      }
-    ]
-    setMessages(clearedMessages)
-    // Clear the cache
-    try {
-      localStorage.removeItem(CACHE_KEY)
-    } catch {
-      // Ignore errors
-    }
+    setMessages([{
+      role: 'assistant',
+      content: "Chat history cleared. How can I help you today?",
+      timestamp: new Date(),
+    }])
     clearHistoryModal.onClose()
     toast({
       title: 'Chat history cleared',
@@ -329,9 +292,9 @@ export default function Coach() {
                   color="neutral.900"
                   fontSize="md"
                   h="56px"
-                  pr="120px"
+                  pr="130px"
                 />
-                <InputRightElement width="110px" h="56px">
+                <InputRightElement width="120px" h="56px" pr={2}>
                   <Button
                     onClick={() => sendMessage()}
                     isLoading={isLoading}
