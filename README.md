@@ -1,10 +1,10 @@
-# Smart Financial Coach
+# CashCompass
 
-An AI-powered financial coaching web application that provides personalized insights, goal tracking, subscription management, portfolio tracking, and interactive financial guidance using ChatGPT.
+An AI-powered financial coaching application that provides insights, goal tracking, subscription management, portfolio tracking, and interactive financial guidance using the OpenAI api.
 
 ## Overview
 
-The Smart Financial Coach analyzes transaction history and investment portfolio to provide:
+CashCompass analyzes transaction history and investment portfolio to provide:
 - **Real-time spending analytics** with visual dashboards
 - **AI-generated insights** for spending patterns and trends
 - **Income & savings analysis** with source breakdown
@@ -15,23 +15,6 @@ The Smart Financial Coach analyzes transaction history and investment portfolio 
 - **Time Machine** for what-if financial scenarios
 - **Interactive AI coach** for conversational financial guidance
 
-## Architecture
-
-```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│  React Frontend │ ──────> │  FastAPI Backend │ ──────> │  OpenAI GPT-4   │
-│  (Chakra UI +   │ <────── │  (Pandas         │ <────── │  (AI Insights)  │
-│   Recharts)     │         │   Analytics)     │         │                 │
-└─────────────────┘         └──────────────────┘         └─────────────────┘
-                                    │
-                      ┌─────────────┼─────────────┐
-                      ▼             ▼             ▼
-              ┌────────────┐ ┌────────────┐ ┌────────────┐
-              │ Transactions│ │ Portfolio  │ │  yfinance  │
-              │    CSV     │ │    CSV     │ │  (Prices)  │
-              └────────────┘ └────────────┘ └────────────┘
-```
-
 ## Tech Stack
 
 ### Backend
@@ -40,8 +23,6 @@ The Smart Financial Coach analyzes transaction history and investment portfolio 
 - **NumPy** - Numerical computing for heuristic scoring
 - **OpenAI API** - ChatGPT integration for natural language insights
 - **yfinance** - Real-time stock price data
-- **Pydantic** - Data validation and settings management
-- **Uvicorn** - ASGI server
 
 ### Frontend
 - **React** - UI framework
@@ -49,7 +30,6 @@ The Smart Financial Coach analyzes transaction history and investment portfolio 
 - **Chakra UI** - Component library
 - **Recharts** - Data visualization
 - **React Router** - Client-side routing
-- **Axios** - HTTP client
 
 ## Features
 
@@ -214,46 +194,6 @@ The subscription detection uses a rule-based scoring system:
 ### Gray Charge Detection
 Separate scoring for suspicious small recurring fees based on amount, brand recognition, and frequency.
 
-## Project Structure
-
-```
-panw-financial-coach/
-├── backend/
-│   ├── main.py              # FastAPI application
-│   ├── models.py            # Pydantic models
-│   ├── analytics.py         # Pandas analytics + heuristic scoring
-│   ├── ai_service.py        # OpenAI integration
-│   ├── portfolio_service.py # Portfolio tracking
-│   ├── backtesting_service.py # Strategy backtesting
-│   ├── config.py            # Configuration management
-│   └── requirements.txt     # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   │   ├── layout/      # Navbar, Footer
-│   │   │   └── ui/          # StatusBadge, etc.
-│   │   ├── pages/           # Page components
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── SpendingInsights.jsx
-│   │   │   ├── Goals.jsx
-│   │   │   ├── Subscriptions.jsx
-│   │   │   ├── Portfolio.jsx
-│   │   │   ├── TimeMachine.jsx
-│   │   │   └── Coach.jsx
-│   │   ├── services/        # API service
-│   │   │   └── api.js
-│   │   ├── utils/           # Shared utilities
-│   │   │   └── cache.js
-│   │   ├── theme/           # Chakra UI theme
-│   │   └── App.jsx
-│   └── package.json
-├── data/
-│   ├── dylanData.csv        # Transaction data
-│   ├── portfolio.csv        # Investment holdings
-│   └── users.csv            # User credentials
-└── README.md
-```
-
 ## Data Format
 
 ### Transactions (dylanData.csv)
@@ -270,44 +210,4 @@ AAPL,15,150.25,2024-01-15,Apple Inc. - Long term hold
 VTI,25,220.00,2024-01-20,Vanguard Total Market ETF
 ```
 
-## Development Tips
-
-### Backend
-- Use `/docs` endpoint for interactive API documentation (Swagger UI)
-- Heuristic scoring constants are at the top of `analytics.py` for easy tuning
-- Add new categories to `EXCLUDED_CATEGORIES` to skip subscription detection
-
-### Frontend
-- Components use Chakra UI for consistent styling
-- API calls centralized in `services/api.js`
-- Cache utilities in `utils/cache.js` for localStorage management
-- Charts use Recharts for responsive visualizations
-
-## Troubleshooting
-
-**Backend won't start:**
-- Check Python version (3.9+)
-- Verify virtual environment is activated
-- Ensure OpenAI API key is set in `.env`
-
-**Portfolio shows 500 error:**
-- Check `portfolio.csv` for malformed data (e.g., invalid numbers)
-- Verify yfinance can fetch stock prices (network access required)
-
-**Frontend won't connect to backend:**
-- Verify backend is running on port 8000
-- Check CORS settings in `config.py`
-- Inspect browser console for errors
-
-**AI insights not generating:**
-- Verify OpenAI API key is valid
-- Check API quota/billing
-- Review backend logs for error messages
-
-## License
-
-MIT
-
-## Contact
-
-For questions or feedback, reach out to Dylan Chapman.
+For questions or feedback, reach out @ dchapman.jp@gmail.com
