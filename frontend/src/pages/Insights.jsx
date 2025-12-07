@@ -13,10 +13,8 @@ import {
   Container,
   Button,
   useToast,
-  Skeleton,
-  SkeletonText,
 } from '@chakra-ui/react'
-import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdFlag, MdCheckCircle, MdWarning, MdAccountBalance, MdSavings, MdAttachMoney, MdShowChart } from 'react-icons/md'
+import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdFlag, MdCheckCircle, MdWarning, MdAccountBalance, MdSavings, MdAttachMoney } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
 import LoginPrompt from '../components/LoginPrompt'
@@ -29,12 +27,9 @@ const DEFAULT_GOALS = [
 ]
 
 const CACHE_KEYS = {
-  AI_INSIGHTS: 'cached_spending_ai_insights',
   GOAL_RESULTS: 'cached_goal_results',
   GOAL_AI_INSIGHTS: 'cached_goal_ai_insights',
 }
-
-const DEFAULT_AI_MESSAGE = "Analyzing your spending patterns... Your personalized insights will appear here shortly."
 
 const TrendIcon = ({ trend }) => {
   const config = {
@@ -57,16 +52,9 @@ export default function SpendingInsights() {
   const [analyticsError, setAnalyticsError] = useState(null)
   const [analytics, setAnalytics] = useState(null)
 
-  // AI insights loading state (slow - loads async with cache)
-  const [aiInsights, setAiInsights] = useState(() => getCached(CACHE_KEYS.AI_INSIGHTS) || DEFAULT_AI_MESSAGE)
-
   // Income and savings state
   const [incomeData, setIncomeData] = useState(null)
   const [savingsData, setSavingsData] = useState(null)
-
-  // Portfolio insight state
-  const [portfolioInsight, setPortfolioInsight] = useState(null)
-  const [portfolioAllocation, setPortfolioAllocation] = useState(null)
 
   if (!isLoggedIn) {
     return (
@@ -94,20 +82,6 @@ export default function SpendingInsights() {
       setAnalytics(spendingResult.analytics)
       setIncomeData(incomeResult.income)
       setSavingsData(incomeResult.savings)
-
-      // If we got AI insights, update them
-      if (spendingResult.ai_insights) {
-        setAiInsights(spendingResult.ai_insights)
-        setCache(CACHE_KEYS.AI_INSIGHTS, spendingResult.ai_insights)
-      }
-
-      // Load portfolio insight async (don't block page load)
-      financialAPI.getPortfolioInsight().then(result => {
-        setPortfolioInsight(result.insight)
-        setPortfolioAllocation(result.allocation)
-      }).catch(() => {
-        // Silently fail - portfolio insight is optional
-      })
     } catch (err) {
       setAnalyticsError(err.message)
     } finally {
@@ -316,133 +290,6 @@ export default function SpendingInsights() {
           </Container>
         </Box>
       )}
-
-      {/* Portfolio Insight */}
-      {portfolioInsight && (
-        <Box py={8} bg="white" borderTop="1px solid" borderColor="neutral.200">
-          <Container maxW="1400px">
-            <Box
-              bg="neutral.900"
-              borderRadius="8px"
-              p={6}
-              position="relative"
-              overflow="hidden"
-            >
-              {/* Subtle gradient accent */}
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                h="3px"
-                bgGradient="linear(to-r, blue.400, purple.500, pink.400)"
-              />
-
-              <HStack spacing={4} align="start">
-                <Box
-                  bg="whiteAlpha.100"
-                  p={3}
-                  borderRadius="8px"
-                  flexShrink={0}
-                >
-                  <Icon as={MdShowChart} boxSize={6} color="blue.300" />
-                </Box>
-
-                <Box flex={1}>
-                  <HStack justify="space-between" align="start" mb={3}>
-                    <Text
-                      fontSize="sm"
-                      fontWeight="bold"
-                      textTransform="uppercase"
-                      letterSpacing="wide"
-                      color="neutral.400"
-                    >
-                      Investment Allocation
-                    </Text>
-                    {portfolioAllocation && (
-                      <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
-                        <HStack spacing={1}>
-                          <Box w={2} h={2} borderRadius="full" bg="blue.400" />
-                          <Text fontSize="xs" color="neutral.400">
-                            Stocks {portfolioAllocation.stocks?.percent?.toFixed(0)}%
-                          </Text>
-                        </HStack>
-                        <HStack spacing={1}>
-                          <Box w={2} h={2} borderRadius="full" bg="purple.400" />
-                          <Text fontSize="xs" color="neutral.400">
-                            ETFs {portfolioAllocation.etfs?.percent?.toFixed(0)}%
-                          </Text>
-                        </HStack>
-                        <HStack spacing={1}>
-                          <Box w={2} h={2} borderRadius="full" bg="green.400" />
-                          <Text fontSize="xs" color="neutral.400">
-                            Bonds {portfolioAllocation.bonds?.percent?.toFixed(0)}%
-                          </Text>
-                        </HStack>
-                      </HStack>
-                    )}
-                  </HStack>
-
-                  <Text
-                    color="white"
-                    fontSize="md"
-                    lineHeight="1.7"
-                    fontWeight="normal"
-                  >
-                    {portfolioInsight}
-                  </Text>
-                </Box>
-              </HStack>
-            </Box>
-          </Container>
-        </Box>
-      )}
-
-      {/* AI Insights */}
-      <Box py={12} bg="neutral.50">
-        <Container maxW="1400px">
-          <Box
-            bg="white"
-            border="2px solid"
-            borderColor="neutral.900"
-            borderRadius="8px"
-            overflow="hidden"
-          >
-            <Box bg="neutral.900" p={6}>
-              <HStack spacing={3} justify="space-between">
-                <HStack spacing={3}>
-                  <Icon as={MdLightbulb} boxSize={6} color="white" />
-                  <Text fontSize="lg" fontWeight="bold" color="white">
-                    AI Financial Analysis
-                  </Text>
-                </HStack>
-                {aiInsights === DEFAULT_AI_MESSAGE && (
-                  <Spinner size="sm" color="white" />
-                )}
-              </HStack>
-            </Box>
-            <Box p={8}>
-              {aiInsights === DEFAULT_AI_MESSAGE ? (
-                <VStack align="stretch" spacing={3}>
-                  <SkeletonText noOfLines={4} spacing={4} skeletonHeight={4} />
-                  <Text fontSize="sm" color="neutral.500" fontStyle="italic">
-                    Loading AI analysis...
-                  </Text>
-                </VStack>
-              ) : (
-                <Text
-                  whiteSpace="pre-wrap"
-                  lineHeight="1.8"
-                  color="neutral.800"
-                  fontSize="md"
-                >
-                  {aiInsights}
-                </Text>
-              )}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
 
       {/* Goal Progress Section */}
       <Box py={16} bg="white" borderTop="1px solid" borderColor="neutral.200">

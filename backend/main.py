@@ -6,7 +6,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from models import (
-    Transaction, AnalyticsSummary, Subscription,
+    AnalyticsSummary, Subscription,
     GoalStatus, ChatMessage, ChatResponse,
     PortfolioSummary, NetWorth, NetWorthGoalProgress,
     TimeMachineScenario, TimeMachineProjection,
@@ -59,30 +59,6 @@ def read_root():
         "service": "Smart Financial Coach API",
         "version": "1.0.0"
     }
-
-@app.get("/api/transactions", response_model=List[Transaction])
-def get_transactions(limit: int = 100):
-    """Get recent transactions"""
-    try:
-        transactions = analytics.get_transactions(limit=limit)
-        return transactions
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/transactions/category/{category}")
-def get_transactions_by_category(category: str, limit: int = 500):
-    """Get transactions filtered by category"""
-    try:
-        transactions = analytics.get_transactions_by_category(category, limit=limit)
-        category_total = sum(t.amount for t in transactions)
-        return {
-            "transactions": transactions,
-            "total": category_total,
-            "count": len(transactions),
-            "category": category
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/insights/spending")
 def get_spending_insights():

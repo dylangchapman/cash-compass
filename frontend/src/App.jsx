@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Homepage from './pages/Homepage'
 import Dashboard from './pages/Dashboard'
-import SpendingInsights from './pages/SpendingInsights'
+import Insights from './pages/Insights'
 import Settings from './pages/Settings'
 import Goals from './pages/Goals'
 import Subscriptions from './pages/Subscriptions'
@@ -20,7 +20,7 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Homepage />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="insights" element={<SpendingInsights />} />
+        <Route path="insights" element={<Insights />} />
         <Route path="time-machine" element={<TimeMachine />} />
         <Route path="subscriptions" element={<Subscriptions />} />
         <Route path="portfolio" element={<Portfolio />} />

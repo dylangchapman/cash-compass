@@ -122,7 +122,7 @@ class PortfolioService:
 
     def _calculate_allocation(self, holdings: List[Dict]) -> Dict:
         """Calculate portfolio allocation by asset type"""
-        stocks = ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'TSLA']
+        stocks = ['AAPL', 'PANW', 'GOOGL', 'NVDA', 'TSLA', 'SNDK', 'LITE', 'COHR', 'MU']
         etfs = ['VTI', 'VOO']
         bonds = ['BND']
 
