@@ -193,5 +193,30 @@ AAPL,15,150.25,2024-01-15,Apple Inc. - Long term hold
 VTI,25,220.00,2024-01-20,Vanguard Total Market ETF
 ```
 
+## Future Improvements
+
+### 1. Self-Hosted LLM Integration
+Replace OpenAI API dependency with self-hosted open-source models for complete data privacy. Financial data would never leave the server, reducing costs and enabling offline capability. Offer an opt-out AI clause.
+
+### 2. Secure Authentication
+Migrate from CSV-based auth to production-ready security:
+- OAuth 2.0 / OpenID Connect with identity providers
+- JWT tokens with refresh rotation
+- TOTP-based two-factor authentication
+
+### 3. Database Migration (PostgreSQL/MySQL)
+Replace CSV storage with a relational database for:
+- Multi-user support with data isolation
+- ACID compliance and transaction integrity
+- Complex analytical queries
+- Proper backup and replication
+
+### 4. ML-Based Transaction Classification
+Upgrade from heuristic scoring to machine learning:
+- **Subscription Detection**: Gradient boosted trees trained on user-labeled data
+- **Category Prediction**: Fine-tuned model for automatic merchant categorization
+- **Anomaly Detection**: Isolation Forest for flagging unusual transactions
+- Active learning loop where user corrections improve model accuracy over time
+
 ### Contact
 For questions or feedback, reach out @ dchapman.jp@gmail.com

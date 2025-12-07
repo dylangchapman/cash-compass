@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Box,
   Text,
@@ -14,17 +15,28 @@ import {
   Button,
   useToast,
 } from '@chakra-ui/react'
-import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdFlag, MdCheckCircle, MdWarning, MdAccountBalance, MdSavings, MdAttachMoney } from 'react-icons/md'
+import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdFlag, MdCheckCircle, MdWarning, MdAccountBalance, MdSavings, MdAttachMoney, MdAdd } from 'react-icons/md'
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
 import LoginPrompt from '../components/LoginPrompt'
 import { getCached, setCache } from '../utils/cache'
+
+const GOALS_STORAGE_KEY = 'user_spending_goals'
 
 const DEFAULT_GOALS = [
   { goal_name: 'Monthly Spending Limit', target: 2500, category: null },
   { goal_name: 'Groceries Budget', target: 400, category: 'Groceries' },
   { goal_name: 'Dining Out Budget', target: 150, category: 'Restaurants' },
 ]
+
+const loadGoalsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(GOALS_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : DEFAULT_GOALS
+  } catch {
+    return DEFAULT_GOALS
+  }
+}
 
 const CACHE_KEYS = {
   GOAL_RESULTS: 'cached_goal_results',
@@ -66,6 +78,7 @@ export default function SpendingInsights() {
   }
 
   // Goal analysis state
+  const [goals] = useState(loadGoalsFromStorage)
   const [analyzing, setAnalyzing] = useState(false)
   const [goalResults, setGoalResults] = useState(() => getCached(CACHE_KEYS.GOAL_RESULTS))
   const [goalAiInsights, setGoalAiInsights] = useState(() => getCached(CACHE_KEYS.GOAL_AI_INSIGHTS))
@@ -89,17 +102,14 @@ export default function SpendingInsights() {
     }
   }, [])
 
-  useEffect(() => {
-    loadAnalytics()
-  }, [loadAnalytics])
-
-  const analyzeGoals = async () => {
+  // Analyze goals
+  const analyzeGoals = useCallback(async (goalsToAnalyze) => {
+    if (!goalsToAnalyze || goalsToAnalyze.length === 0) return
     try {
       setAnalyzing(true)
-      const result = await financialAPI.analyzeGoals(DEFAULT_GOALS)
+      const result = await financialAPI.analyzeGoals(goalsToAnalyze)
       setGoalResults(result.goals)
       setGoalAiInsights(result.ai_insights)
-      // Cache the results
       setCache(CACHE_KEYS.GOAL_RESULTS, result.goals)
       setCache(CACHE_KEYS.GOAL_AI_INSIGHTS, result.ai_insights)
     } catch (err) {
@@ -107,7 +117,19 @@ export default function SpendingInsights() {
     } finally {
       setAnalyzing(false)
     }
-  }
+  }, [toast])
+
+  // Load data on mount
+  useEffect(() => {
+    loadAnalytics()
+  }, [loadAnalytics])
+
+  // Auto-analyze goals on mount
+  useEffect(() => {
+    if (goals.length > 0) {
+      analyzeGoals(goals)
+    }
+  }, []) // Only run once on mount
 
   if (analyticsLoading) {
     return (
@@ -307,23 +329,41 @@ export default function SpendingInsights() {
                   Goal Progress
                 </Text>
                 <Text fontSize="lg" color="neutral.600">
-                  Track your spending against your budget goals
+                  Track your spending against your budget goals ({goals.length} goal{goals.length !== 1 ? 's' : ''})
                 </Text>
               </Box>
-              <Button
-                onClick={analyzeGoals}
-                isLoading={analyzing}
-                loadingText="Analyzing..."
-                size="lg"
-                leftIcon={<MdFlag />}
-              >
-                Analyze Progress
-              </Button>
+              <HStack spacing={3}>
+                <Button
+                  as={Link}
+                  to="/goals"
+                  variant="outline"
+                  size="lg"
+                  leftIcon={<MdAdd />}
+                >
+                  Manage Goals
+                </Button>
+                <Button
+                  onClick={() => analyzeGoals(goals)}
+                  isLoading={analyzing}
+                  loadingText="Analyzing..."
+                  size="lg"
+                  leftIcon={<MdFlag />}
+                >
+                  Refresh
+                </Button>
+              </HStack>
             </HStack>
           </Box>
 
           {/* Goal Cards */}
-          {goalResults && goalResults.length > 0 ? (
+          {analyzing && !goalResults ? (
+            <Center py={12}>
+              <VStack spacing={4}>
+                <Spinner size="xl" color="neutral.900" thickness="3px" />
+                <Text color="neutral.600">Analyzing your goals...</Text>
+              </VStack>
+            </Center>
+          ) : goalResults && goalResults.length > 0 ? (
             <VStack spacing={6} align="stretch">
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6}>
                 {goalResults.map((result, idx) => {
@@ -389,7 +429,7 @@ export default function SpendingInsights() {
                 </Box>
               )}
             </VStack>
-          ) : (
+          ) : goals.length === 0 ? (
             <Box
               py={12}
               textAlign="center"
@@ -399,12 +439,22 @@ export default function SpendingInsights() {
             >
               <Icon as={MdFlag} boxSize={12} color="neutral.300" mb={4} />
               <Text fontSize="lg" fontWeight="semibold" color="neutral.600" mb={2}>
-                Click "Analyze Progress" to see your goal status
+                No goals set yet
               </Text>
-              <Text fontSize="sm" color="neutral.500">
-                Your goals: Monthly spending, Groceries, and Dining budgets
+              <Text fontSize="sm" color="neutral.500" mb={4}>
+                Add spending goals to track your progress
               </Text>
+              <Button as={Link} to="/goals" leftIcon={<MdAdd />}>
+                Add Goals
+              </Button>
             </Box>
+          ) : (
+            <Center py={12}>
+              <VStack spacing={4}>
+                <Spinner size="xl" color="neutral.900" thickness="3px" />
+                <Text color="neutral.600">Loading goal progress...</Text>
+              </VStack>
+            </Center>
           )}
         </Container>
       </Box>

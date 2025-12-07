@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Box,
@@ -23,23 +23,52 @@ import {
   MdTrendingUp,
 } from 'react-icons/md'
 
+const GOALS_STORAGE_KEY = 'user_spending_goals'
+const MAX_GOALS = 6
+
 const DEFAULT_GOALS = [
   { goal_name: 'Monthly Spending Limit', target: 2500, category: null },
   { goal_name: 'Groceries Budget', target: 400, category: 'Groceries' },
   { goal_name: 'Dining Out Budget', target: 150, category: 'Restaurants' },
 ]
 
+const loadGoalsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(GOALS_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : DEFAULT_GOALS
+  } catch {
+    return DEFAULT_GOALS
+  }
+}
+
+const saveGoalsToStorage = (goals) => {
+  try {
+    localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export default function Goals() {
   const toast = useToast()
 
-  // Goals state
-  const [goals, setGoals] = useState(DEFAULT_GOALS)
+  // Goals state - load from localStorage
+  const [goals, setGoals] = useState(loadGoalsFromStorage)
   const [newGoal, setNewGoal] = useState({ goal_name: '', target: '', category: '' })
+
+  // Save to localStorage whenever goals change
+  useEffect(() => {
+    saveGoalsToStorage(goals)
+  }, [goals])
 
   // Goals handlers
   const addGoal = () => {
     if (!newGoal.goal_name || !newGoal.target) {
       toast({ title: 'Missing information', description: 'Please enter goal name and target', status: 'warning', duration: 3000 })
+      return
+    }
+    if (goals.length >= MAX_GOALS) {
+      toast({ title: 'Maximum goals reached', description: `You can only have up to ${MAX_GOALS} goals`, status: 'warning', duration: 3000 })
       return
     }
     setGoals([...goals, {
@@ -160,7 +189,7 @@ export default function Goals() {
               <Icon as={MdTrendingUp} boxSize={5} color="neutral.700" />
               <Text fontSize="lg" fontWeight="bold" color="neutral.900">Your Goals</Text>
               <Text fontSize="sm" color="neutral.500" ml="auto">
-                {goals.length} goal{goals.length !== 1 ? 's' : ''} set
+                {goals.length}/{MAX_GOALS} goals
               </Text>
             </Flex>
             <Box p={6}>

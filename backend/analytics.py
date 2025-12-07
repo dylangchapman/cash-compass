@@ -591,12 +591,30 @@ class FinancialAnalytics:
         expense_df = self.df[self.df['type'] == 'debit']
 
         if category:
-            relevant = expense_df[expense_df['category'] == category]
+            # Filter by specific category (case-insensitive)
+            relevant = expense_df[expense_df['category'].str.lower() == category.lower()]
         else:
+            # No category specified - use all expenses
             relevant = expense_df
 
+        # If no matching transactions found, return 0 current spending
+        if relevant.empty:
+            return {
+                "goal_name": goal_name,
+                "target": target,
+                "current": 0.0,
+                "progress_percent": 0.0,
+                "status": "on-track",
+                "forecast": f"No spending found for this goal. Target is ${target:.2f}/month",
+                "trend": "stable"
+            }
+
         monthly_spending = relevant.groupby('month')['amount'].sum()
-        current_avg = monthly_spending.mean()
+        current_avg = monthly_spending.mean() if len(monthly_spending) > 0 else 0.0
+
+        # Handle NaN values
+        if pd.isna(current_avg):
+            current_avg = 0.0
 
         if len(monthly_spending) >= 2:
             recent_avg = monthly_spending.tail(2).mean()
