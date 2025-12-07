@@ -20,6 +20,7 @@ import { MdTrendingUp, MdTrendingDown, MdTrendingFlat, MdLightbulb, MdFlag, MdCh
 import { financialAPI } from '../services/api'
 import StatusBadge from '../components/ui/StatusBadge'
 import LoginPrompt from '../components/LoginPrompt'
+import { getCached, setCache } from '../utils/cache'
 
 const DEFAULT_GOALS = [
   { goal_name: 'Monthly Spending Limit', target: 2500, category: null },
@@ -45,25 +46,6 @@ const TrendIcon = ({ trend }) => {
   const { icon, color } = config[trend] || config.stable
 
   return <Icon as={icon} color={color} boxSize={5} />
-}
-
-// Helper to safely get cached data
-const getCached = (key) => {
-  try {
-    const cached = localStorage.getItem(key)
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
-}
-
-// Helper to cache data
-const setCache = (key, data) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 export default function SpendingInsights() {

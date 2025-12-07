@@ -13,7 +13,6 @@ import {
   Icon,
   Flex,
   Skeleton,
-  SkeletonText,
   Button,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
@@ -34,6 +33,7 @@ import {
 } from 'recharts'
 import { MdTrendingUp, MdTrendingDown, MdCheckCircle } from 'react-icons/md'
 import { financialAPI } from '../services/api'
+import { getCached, setCache } from '../utils/cache'
 
 // Net worth goal milestones - auto-adjusts based on current net worth
 const NET_WORTH_MILESTONES = [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000]
@@ -67,25 +67,6 @@ const COLORS = ['#18181b', '#3f3f46', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7'
 const CACHE_KEYS = {
   NET_WORTH: 'cached_net_worth',
   NET_WORTH_PROGRESS: 'cached_net_worth_progress',
-}
-
-// Helper to safely get cached data
-const getCached = (key) => {
-  try {
-    const cached = localStorage.getItem(key)
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
-}
-
-// Helper to cache data
-const setCache = (key, data) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 export default function Dashboard() {

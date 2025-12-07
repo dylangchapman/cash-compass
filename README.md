@@ -1,14 +1,18 @@
 # Smart Financial Coach
 
-An AI-powered financial coaching web application that provides personalized insights, goal tracking, subscription management, and interactive financial guidance using ChatGPT.
+An AI-powered financial coaching web application that provides personalized insights, goal tracking, subscription management, portfolio tracking, and interactive financial guidance using ChatGPT.
 
 ## Overview
 
-The Smart Financial Coach analyzes Dylan Chapman's 6-month transaction history to provide:
+The Smart Financial Coach analyzes transaction history and investment portfolio to provide:
 - **Real-time spending analytics** with visual dashboards
 - **AI-generated insights** for spending patterns and trends
+- **Income & savings analysis** with source breakdown
 - **Goal tracking and forecasting** with personalized recommendations
-- **Subscription detection** including gray charge identification
+- **Subscription detection** with heuristic scoring for gray charge identification
+- **Portfolio tracking** with real-time stock prices via yfinance
+- **Backtesting tools** for comparing investment strategies
+- **Time Machine** for what-if financial scenarios
 - **Interactive AI coach** for conversational financial guidance
 
 ## Architecture
@@ -19,12 +23,13 @@ The Smart Financial Coach analyzes Dylan Chapman's 6-month transaction history t
 │  (Chakra UI +   │ <────── │  (Pandas         │ <────── │  (AI Insights)  │
 │   Recharts)     │         │   Analytics)     │         │                 │
 └─────────────────┘         └──────────────────┘         └─────────────────┘
-                                     │
-                                     ▼
-                            ┌─────────────────┐
-                            │  CSV Data Store │
-                            │  (Transactions) │
-                            └─────────────────┘
+                                    │
+                      ┌─────────────┼─────────────┐
+                      ▼             ▼             ▼
+              ┌────────────┐ ┌────────────┐ ┌────────────┐
+              │ Transactions│ │ Portfolio  │ │  yfinance  │
+              │    CSV     │ │    CSV     │ │  (Prices)  │
+              └────────────┘ └────────────┘ └────────────┘
 ```
 
 ## Tech Stack
@@ -32,7 +37,9 @@ The Smart Financial Coach analyzes Dylan Chapman's 6-month transaction history t
 ### Backend
 - **FastAPI** - High-performance Python web framework
 - **Pandas** - Data analytics and processing
+- **NumPy** - Numerical computing for heuristic scoring
 - **OpenAI API** - ChatGPT integration for natural language insights
+- **yfinance** - Real-time stock price data
 - **Pydantic** - Data validation and settings management
 - **Uvicorn** - ASGI server
 
@@ -48,38 +55,57 @@ The Smart Financial Coach analyzes Dylan Chapman's 6-month transaction history t
 
 ### 1. Dashboard
 - Total income, expenses, and net savings overview
+- Net worth tracking with milestone progress
 - Spending breakdown by category (bar chart & pie chart)
 - Monthly spending trends (line chart)
-- Anomaly detection and alerts
-- Subscription summary
+- Subscription summary with gray charge alerts
 
-### 2. Spending Insights
+### 2. Financial Insights
+- **Income Sources** - Breakdown by source with monthly averages
+- **Savings Summary** - Monthly savings rate and trends
+- **AI Portfolio Insight** - Risk/reward analysis of investments
 - AI-generated financial health assessment
 - Category-by-category spending analysis
 - Trend detection (increasing, decreasing, stable)
-- Unusual transaction identification
-- Actionable recommendations
+- Unusual transaction identification (limited to top 5)
 
 ### 3. Goal Tracking
 - Custom goal creation with category targeting
 - Progress monitoring with visual indicators
 - On-track/off-track status
 - AI-powered improvement suggestions
-- Savings forecasting
 
 ### 4. Subscription Manager
-- Automatic recurring charge detection
-- Gray charge identification
-- Total monthly subscription cost
-- Per-subscription analytics
-- AI recommendations for optimization
+- **Heuristic scoring system** for subscription detection
+- Subscription score based on: transaction frequency, interval consistency, amount stability, category
+- **Gray charge detection** for suspicious micro-fees
+- Labels: `likely_subscription`, `possible_subscription`, `not_subscription`
+- Tags: `gray_recurring_fee`, `micro_subscription`, `possibly_unused_subscription`
+- Excluded categories: rent, groceries, gas, restaurants, utilities
 
-### 5. Financial Coach Chat
+### 5. Portfolio Tracker
+- Real-time stock prices via yfinance
+- Holdings table with cost basis, current value, return %
+- Asset allocation pie chart (Stocks, ETFs, Bonds)
+- AI-generated portfolio risk assessment
+- **Backtesting tools:**
+  - Preset allocations (60/40, S&P 500, Aggressive, Conservative, All Weather)
+  - Custom stock/bond mix sliders
+  - Multi-portfolio comparison with indicators (SMA, EMA)
+  - Strategy comparison (Buy & Hold vs SMA Crossover)
+- Performance metrics: Total Return, CAGR, Sharpe Ratio, Sortino Ratio, Max Drawdown
+
+### 6. Time Machine
+- What-if scenario modeling
+- Adjust spending, income, and savings rates
+- 12-month and 10-year projections
+- Emergency fund and goal tracking
+
+### 7. Financial Coach Chat
 - Interactive AI conversation
 - Context-aware responses using transaction data
 - Suggested quick questions
 - Real-time financial advice
-- Actionable suggestion extraction
 
 ## Setup Instructions
 
@@ -153,53 +179,40 @@ The app will be available at `http://localhost:3000`
 | `/api/transactions` | GET | Retrieve recent transactions |
 | `/api/dashboard/summary` | GET | Get dashboard summary data |
 | `/api/insights/spending` | GET | Get spending analytics + AI insights |
+| `/api/insights/income` | GET | Get income sources and savings breakdown |
+| `/api/insights/portfolio` | GET | Get AI portfolio risk assessment |
 | `/api/insights/subscriptions` | GET | Detect subscriptions + AI analysis |
+| `/api/insights/scoring` | GET | Get full heuristic scoring output |
 | `/api/insights/goals` | POST | Analyze goal progress + AI recommendations |
+| `/api/portfolio` | GET | Get portfolio holdings and allocation |
+| `/api/portfolio/refresh` | POST | Refresh stock prices |
+| `/api/networth` | GET | Get total net worth |
 | `/api/coach` | POST | Interactive chat with AI coach |
+| `/api/backtest/*` | Various | Backtesting endpoints |
+| `/api/time-machine/*` | Various | Scenario projection endpoints |
 
-### Example API Usage
+## Heuristic Scoring System
 
-**Get Spending Insights:**
-```bash
-curl http://localhost:8000/api/insights/spending
-```
+The subscription detection uses a rule-based scoring system:
 
-**Chat with Coach:**
-```bash
-curl -X POST http://localhost:8000/api/coach \
-  -H "Content-Type: application/json" \
-  -d '{"message": "How can I save more money?"}'
-```
+### Subscription Score (0-14 points)
+- +2 if merchant has 3+ transactions
+- +3 if interval is monthly (27-33 days) or weekly (6-8 days)
+- +1 if interval standard deviation ≤ 3 days
+- +2 if amount coefficient of variation ≤ 0.05
+- +1 if average amount is $5-50 (typical subscription range)
+- +1 if amount < $5 (micro subscription)
+- +1 if category is entertainment, software, fitness, services, or education
+- +1 if active for 90+ days with 3+ transactions
+- +1 if price increased 5-20% (typical annual hikes)
 
-**Analyze Goals:**
-```bash
-curl -X POST http://localhost:8000/api/insights/goals \
-  -H "Content-Type: application/json" \
-  -d '[{"goal_name": "Monthly Budget", "target": 2500}]'
-```
+### Labels
+- `likely_subscription`: score ≥ 8
+- `possible_subscription`: score 4-7
+- `not_subscription`: score ≤ 3
 
-## Data Flow
-
-1. **Transaction Loading**: Backend loads CSV data using Pandas
-2. **Analytics Processing**: Compute statistics (trends, anomalies, subscriptions)
-3. **AI Enhancement**: Send numeric stats to ChatGPT with contextual prompts
-4. **Natural Language Generation**: ChatGPT converts stats into friendly insights
-5. **Frontend Display**: React components visualize data with charts and AI insights
-
-## AI Prompt Strategy
-
-The system uses role-based prompts optimized for each feature:
-
-- **Spending Insights**: "You are a friendly financial coach analyzing spending patterns..."
-- **Goal Analysis**: "You are a supportive coach helping achieve financial goals..."
-- **Subscription Review**: "You are helping identify and manage recurring charges..."
-- **Interactive Chat**: "You are a personal financial coach with access to transaction data..."
-
-Each prompt includes:
-- Clear role definition
-- Relevant numeric analytics
-- Expected output format
-- Tone guidelines (friendly, actionable, encouraging)
+### Gray Charge Detection
+Separate scoring for suspicious small recurring fees based on amount, brand recognition, and frequency.
 
 ## Project Structure
 
@@ -208,83 +221,67 @@ panw-financial-coach/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── models.py            # Pydantic models
-│   ├── analytics.py         # Pandas analytics engine
+│   ├── analytics.py         # Pandas analytics + heuristic scoring
 │   ├── ai_service.py        # OpenAI integration
+│   ├── portfolio_service.py # Portfolio tracking
+│   ├── backtesting_service.py # Strategy backtesting
 │   ├── config.py            # Configuration management
-│   ├── requirements.txt     # Python dependencies
-│   └── .env.example         # Environment template
+│   └── requirements.txt     # Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── components/      # Reusable components
-│   │   │   └── Layout.jsx
+│   │   │   ├── layout/      # Navbar, Footer
+│   │   │   └── ui/          # StatusBadge, etc.
 │   │   ├── pages/           # Page components
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── SpendingInsights.jsx
 │   │   │   ├── Goals.jsx
 │   │   │   ├── Subscriptions.jsx
+│   │   │   ├── Portfolio.jsx
+│   │   │   ├── TimeMachine.jsx
 │   │   │   └── Coach.jsx
 │   │   ├── services/        # API service
 │   │   │   └── api.js
+│   │   ├── utils/           # Shared utilities
+│   │   │   └── cache.js
 │   │   ├── theme/           # Chakra UI theme
-│   │   │   └── theme.js
-│   │   ├── App.jsx          # Main app component
-│   │   └── main.jsx         # Entry point
-│   ├── package.json
-│   ├── vite.config.js
-│   └── index.html
+│   │   └── App.jsx
+│   └── package.json
 ├── data/
-│   └── dylanData.yaml       # Transaction data (CSV)
+│   ├── dylanData.csv        # Transaction data
+│   ├── portfolio.csv        # Investment holdings
+│   └── users.csv            # User credentials
 └── README.md
+```
+
+## Data Format
+
+### Transactions (dylanData.csv)
+```csv
+date,merchant,category,amount,type,notes
+2024-01-15,Netflix,Subscription,15.99,debit,Monthly streaming
+2024-01-15,Employer,Income,3200.00,credit,Salary
+```
+
+### Portfolio (portfolio.csv)
+```csv
+symbol,shares,purchase_price,purchase_date,notes
+AAPL,15,150.25,2024-01-15,Apple Inc. - Long term hold
+VTI,25,220.00,2024-01-20,Vanguard Total Market ETF
 ```
 
 ## Development Tips
 
 ### Backend
 - Use `/docs` endpoint for interactive API documentation (Swagger UI)
-- Analytics engine caches data on load for performance
-- Add new endpoints in `main.py`
-- Extend analytics in `analytics.py`
-- Customize AI prompts in `ai_service.py`
+- Heuristic scoring constants are at the top of `analytics.py` for easy tuning
+- Add new categories to `EXCLUDED_CATEGORIES` to skip subscription detection
 
 ### Frontend
 - Components use Chakra UI for consistent styling
 - API calls centralized in `services/api.js`
+- Cache utilities in `utils/cache.js` for localStorage management
 - Charts use Recharts for responsive visualizations
-- State management uses React hooks (no Redux needed for this scope)
-
-## Optimization Opportunities
-
-### Current Implementation
-- CSV data source (simple, fast for prototyping)
-- In-memory analytics (recomputed per request)
-- Stateless API (no user sessions)
-
-### Production Enhancements
-- **Database**: Migrate to PostgreSQL or SQLite for persistence
-- **Caching**: Add Redis for analytics result caching
-- **Authentication**: Implement user auth (JWT, OAuth)
-- **Real-time**: WebSocket for live transaction updates
-- **Rate Limiting**: Protect OpenAI API usage
-- **Error Handling**: Enhanced error boundaries and retry logic
-- **Testing**: Add pytest (backend) and Jest (frontend) suites
-- **Deployment**: Containerize with Docker, deploy to cloud
-
-## Cost Considerations
-
-- **OpenAI API**: ~$0.01-0.03 per insight request (using GPT-4)
-- **Optimization**: Use GPT-3.5-turbo for cost reduction (change `OPENAI_MODEL` in `.env`)
-- **Caching**: Cache AI responses for repeated queries
-
-## Future Features
-
-- [ ] Multi-user support with authentication
-- [ ] Bank integration (Plaid API)
-- [ ] Budget creation wizard
-- [ ] Savings goals with visual progress
-- [ ] Email alerts for anomalies
-- [ ] Export reports (PDF)
-- [ ] Mobile app (React Native)
-- [ ] Voice assistant integration
 
 ## Troubleshooting
 
@@ -292,6 +289,10 @@ panw-financial-coach/
 - Check Python version (3.9+)
 - Verify virtual environment is activated
 - Ensure OpenAI API key is set in `.env`
+
+**Portfolio shows 500 error:**
+- Check `portfolio.csv` for malformed data (e.g., invalid numbers)
+- Verify yfinance can fetch stock prices (network access required)
 
 **Frontend won't connect to backend:**
 - Verify backend is running on port 8000

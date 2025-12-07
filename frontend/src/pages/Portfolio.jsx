@@ -107,9 +107,6 @@ export default function Portfolio() {
   const [customStocks, setCustomStocks] = useState(60)
   const [customBonds, setCustomBonds] = useState(40)
 
-  // Holdings expand state
-  const [holdingsExpanded, setHoldingsExpanded] = useState(false)
-
   // Portfolio AI insight
   const [portfolioInsight, setPortfolioInsight] = useState(null)
 
@@ -367,12 +364,12 @@ export default function Portfolio() {
             </Box>
           )}
 
-          <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={8} mt={8} alignItems="start">
+          <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={8} mt={8} alignItems="stretch">
             {/* Holdings Table */}
-            <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" overflow="hidden">
-              <Box overflowX="auto">
+            <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" overflow="hidden" display="flex" flexDirection="column">
+              <Box overflowY="auto" flex="1">
                 <Table size="sm" variant="simple">
-                  <Thead bg="neutral.50">
+                  <Thead bg="neutral.50" position="sticky" top={0} zIndex={1}>
                     <Tr>
                       <Th py={3} fontSize="xs">Symbol</Th>
                       <Th py={3} fontSize="xs">Name</Th>
@@ -383,7 +380,7 @@ export default function Portfolio() {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {(holdingsExpanded ? portfolio?.holdings : portfolio?.holdings?.slice(0, 4))?.map((holding, idx) => {
+                    {portfolio?.holdings?.map((holding, idx) => {
                       const isGain = holding.gain_loss >= 0
                       return (
                         <Tr key={idx} _hover={{ bg: 'neutral.50' }}>
@@ -401,25 +398,10 @@ export default function Portfolio() {
                   </Tbody>
                 </Table>
               </Box>
-              {portfolio?.holdings?.length > 4 && (
-                <Box
-                  py={2}
-                  textAlign="center"
-                  borderTop="1px solid"
-                  borderColor="neutral.100"
-                  cursor="pointer"
-                  _hover={{ bg: 'neutral.50' }}
-                  onClick={() => setHoldingsExpanded(!holdingsExpanded)}
-                >
-                  <Text fontSize="sm" fontWeight="semibold" color="neutral.500">
-                    {holdingsExpanded ? 'Show less' : `... ${portfolio.holdings.length - 4} more positions`}
-                  </Text>
-                </Box>
-              )}
             </Box>
 
             {/* Allocation Chart & Cards */}
-            <VStack align="stretch" spacing={3}>
+            <VStack align="stretch" spacing={3} justify="space-between">
               <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" p={3}>
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
@@ -1087,25 +1069,6 @@ function SectionHeader({ title, description }) {
     <Box>
       <Text fontSize={{ base: '3xl', md: '4xl' }} fontWeight="black" color="neutral.900" letterSpacing="tighter" mb={3}>{title}</Text>
       <Text fontSize="lg" color="neutral.600" fontWeight="normal">{description}</Text>
-    </Box>
-  )
-}
-
-function AllocationCard({ title, percent, value, color }) {
-  return (
-    <Box bg="white" border="2px solid" borderColor="neutral.200" borderRadius="8px" p={6} transition="all 0.2s" _hover={{ borderColor: color, transform: 'translateX(4px)' }}>
-      <Flex justify="space-between" align="center">
-        <HStack spacing={4}>
-          <Box w="4px" h="50px" bg={color} borderRadius="2px" />
-          <Box>
-            <Text fontSize="lg" fontWeight="bold" color="neutral.900" mb={1}>{title}</Text>
-            <Text fontSize="3xl" fontWeight="black" color="neutral.900" letterSpacing="tighter">${value?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-          </Box>
-        </HStack>
-        <Box textAlign="right">
-          <Text fontSize="4xl" fontWeight="black" color={color} letterSpacing="tighter">{percent}%</Text>
-        </Box>
-      </Flex>
     </Box>
   )
 }
