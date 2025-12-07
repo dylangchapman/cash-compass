@@ -1,0 +1,4 @@
+email,password,name,created_at
+demo@example.com,demo123,Demo User,2024-01-01
+dylan@example.com,password123,Dylan Chapman,2024-01-15
+dc@gmail.com,123456,Dylan C,2025-12-06

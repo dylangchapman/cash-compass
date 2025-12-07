@@ -10,9 +10,14 @@ const api = axios.create({
 })
 
 export const financialAPI = {
-  // Transactions
-  getTransactions: async (limit = 100) => {
-    const response = await api.get(`/api/transactions?limit=${limit}`)
+  // Authentication
+  login: async (email, password) => {
+    const response = await api.post('/api/auth/login', { email, password })
+    return response.data
+  },
+
+  register: async (email, password, name) => {
+    const response = await api.post('/api/auth/register', { email, password, name })
     return response.data
   },
 
@@ -65,6 +70,38 @@ export const financialAPI = {
 
   analyzeNetWorthGoal: async (goalAmount) => {
     const response = await api.post(`/api/networth/goal?goal_amount=${goalAmount}`)
+    return response.data
+  },
+
+  // Backtesting
+  getBacktestPresets: async () => {
+    const response = await api.get('/api/backtest/presets')
+    return response.data
+  },
+
+  compareStrategies: async (symbol = 'SPY', years = 5, initialCapital = 10000) => {
+    const response = await api.get(`/api/backtest/compare?symbol=${symbol}&years=${years}&initial_capital=${initialCapital}`)
+    return response.data
+  },
+
+  backtestAllocation: async (preset = '60_40', years = 5, initialCapital = 10000) => {
+    const response = await api.get(`/api/backtest/allocation?preset=${preset}&years=${years}&initial_capital=${initialCapital}`)
+    return response.data
+  },
+
+  backtestCustomAllocation: async (allocation, years = 5, initialCapital = 10000) => {
+    const response = await api.post('/api/backtest/custom', { allocation, years, initial_capital: initialCapital })
+    return response.data
+  },
+
+  // Time Machine
+  getTimeMachineBaseline: async () => {
+    const response = await api.get('/api/time-machine/baseline')
+    return response.data
+  },
+
+  projectTimeMachine: async (scenario) => {
+    const response = await api.post('/api/time-machine/project', scenario)
     return response.data
   },
 }

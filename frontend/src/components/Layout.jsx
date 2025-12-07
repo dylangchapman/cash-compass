@@ -1,4 +1,4 @@
-import { Box, Container } from '@chakra-ui/react'
+import { Box } from '@chakra-ui/react'
 import { Outlet } from 'react-router-dom'
 import Navbar from './layout/Navbar'
 import Footer from './layout/Footer'
@@ -8,9 +8,9 @@ export default function Layout() {
     <Box minH="100vh" bg="neutral.50">
       <Navbar />
 
-      <Container maxW="container.xl" py={12}>
+      <Box w="full">
         <Outlet />
-      </Container>
+      </Box>
 
       <Footer />
     </Box>

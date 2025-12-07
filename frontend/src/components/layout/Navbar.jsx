@@ -14,7 +14,7 @@ import {
   Avatar,
 } from '@chakra-ui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { MdShield, MdPerson, MdLogout } from 'react-icons/md'
+import { MdPerson, MdLogout, MdChevronRight, MdPrivacyTip, MdFlag } from 'react-icons/md'
 
 const NavLink = ({ to, children }) => {
   const location = useLocation()
@@ -24,18 +24,26 @@ const NavLink = ({ to, children }) => {
     <ChakraLink
       as={Link}
       to={to}
-      px={3}
+      px={4}
       py={2}
       fontSize="sm"
-      fontWeight="medium"
+      fontWeight={isActive ? 'bold' : 'medium'}
       color={isActive ? 'neutral.900' : 'neutral.600'}
-      borderBottom="2px solid"
-      borderColor={isActive ? 'primary.500' : 'transparent'}
       _hover={{
         color: 'neutral.900',
         textDecoration: 'none',
       }}
-      transition="all 0.2s"
+      transition="all 0.15s"
+      position="relative"
+      _after={isActive ? {
+        content: '""',
+        position: 'absolute',
+        bottom: '-1px',
+        left: 0,
+        right: 0,
+        height: '2px',
+        bg: 'neutral.900',
+      } : {}}
     >
       {children}
     </ChakraLink>
@@ -61,61 +69,121 @@ export default function Navbar() {
       borderColor="neutral.200"
       position="sticky"
       top={0}
-      zIndex={10}
+      zIndex={100}
+      backdropFilter="blur(10px)"
     >
-      <Container maxW="container.xl">
-        <Flex h={16} align="center" justify="space-between">
+      <Container maxW="1400px">
+        <Flex h={20} align="center" justify="space-between">
           {/* Logo */}
-          <HStack spacing={3}>
-            <Text fontSize="xl" fontWeight="semibold" color="neutral.900" letterSpacing="tight">
-              Financial Coach
+          <Box
+            as={Link}
+            to="/"
+            _hover={{ textDecoration: 'none' }}
+          >
+            <Text
+              fontSize="xl"
+              fontWeight="black"
+              color="neutral.900"
+              letterSpacing="tighter"
+            >
+              CashCompass
             </Text>
-            <HStack spacing={1.5} px={2} py={1} bg="neutral.100" borderRadius="sm">
-              <Icon as={MdShield} boxSize={3.5} color="neutral.600" />
-              <Text fontSize="xs" fontWeight="medium" color="neutral.600">
-                Secure
-              </Text>
-            </HStack>
-          </HStack>
+          </Box>
 
           {/* Navigation */}
-          <Flex align="center" gap={1}>
-            {isLoggedIn ? (
-              <>
-                <HStack spacing={1} mr={4}>
-                  <NavLink to="/">Dashboard</NavLink>
-                  <NavLink to="/insights">Insights</NavLink>
-                  <NavLink to="/goals">Goals</NavLink>
-                  <NavLink to="/subscriptions">Subscriptions</NavLink>
-                  <NavLink to="/portfolio">Portfolio</NavLink>
-                  <NavLink to="/coach">Coach</NavLink>
-                </HStack>
+          <Flex align="center" gap={2}>
+            <HStack spacing={1} mr={6}>
+              <NavLink to="/dashboard">Dashboard</NavLink>
+              <NavLink to="/insights">Insights</NavLink>
+              <NavLink to="/time-machine">Time Machine</NavLink>
+              <NavLink to="/subscriptions">Subscriptions</NavLink>
+              <NavLink to="/portfolio">Portfolio</NavLink>
+              <NavLink to="/coach">Coach</NavLink>
+            </HStack>
 
-                <Menu>
-                  <MenuButton>
-                    <Flex align="center" gap={2} px={3} py={2} cursor="pointer">
-                      <Avatar size="sm" name={userName} bg="primary.500" />
-                      <Text fontSize="sm" fontWeight="medium" color="neutral.700">
-                        {userName.split(' ')[0]}
-                      </Text>
-                    </Flex>
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem icon={<MdPerson />} as={Link} to="/account">
-                      Account Settings
-                    </MenuItem>
-                    <MenuItem icon={<MdLogout />} onClick={handleLogout}>
-                      Sign Out
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
-              </>
+            {isLoggedIn ? (
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  variant="ghost"
+                  size="md"
+                  rightIcon={<MdChevronRight />}
+                  px={3}
+                >
+                  <HStack spacing={3}>
+                    <Avatar size="sm" name={userName} bg="neutral.900" />
+                    <Text fontSize="sm" fontWeight="semibold" color="neutral.900">
+                      {userName.split(' ')[0]}
+                    </Text>
+                  </HStack>
+                </MenuButton>
+                <MenuList
+                  borderRadius="8px"
+                  border="2px solid"
+                  borderColor="neutral.600"
+                  bg="neutral.900"
+                  p={2}
+                  boxShadow="0 10px 40px rgba(0, 0, 0, 0.4)"
+                  minW="200px"
+                >
+                  <MenuItem
+                    icon={<MdFlag />}
+                    as={Link}
+                    to="/goals"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
+                  >
+                    Spending Goals
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdPerson />}
+                    as={Link}
+                    to="/settings"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
+                  >
+                    Settings
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdPrivacyTip />}
+                    as={Link}
+                    to="/privacy"
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="neutral.100"
+                    bg="transparent"
+                    _hover={{ bg: 'neutral.700', color: 'white' }}
+                  >
+                    Privacy Policy
+                  </MenuItem>
+                  <MenuItem
+                    icon={<MdLogout />}
+                    onClick={handleLogout}
+                    borderRadius="6px"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    color="white"
+                    bg="transparent"
+                    _hover={{ bg: 'error.900', color: 'error.300' }}
+                  >
+                    Sign Out
+                  </MenuItem>
+                </MenuList>
+              </Menu>
             ) : (
               <Button
                 as={Link}
                 to="/login"
-                variant="primary"
-                size="sm"
+                size="md"
               >
                 Sign In
               </Button>
