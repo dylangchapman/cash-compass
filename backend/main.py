@@ -9,7 +9,8 @@ from models import (
     Transaction, AnalyticsSummary, Subscription,
     GoalStatus, ChatMessage, ChatResponse,
     PortfolioSummary, NetWorth, NetWorthGoalProgress,
-    TimeMachineScenario, TimeMachineProjection
+    TimeMachineScenario, TimeMachineProjection,
+    ScoringOutput, MerchantFeatures, AnnotatedTransaction
 )
 from analytics import analytics
 from ai_service import ai_service
@@ -121,6 +122,27 @@ def get_subscription_insights():
             "ai_insights": ai_insights,
             "total_monthly": sum(sub.amount for sub in subscriptions),
             "gray_charges_detected": sum(1 for sub in subscriptions if sub.is_gray_charge)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/insights/scoring")
+def get_heuristic_scoring():
+    """Get full heuristic scoring output with merchant features and annotated transactions"""
+    try:
+        scoring_output = analytics.run_heuristic_scoring()
+        return {
+            "merchants": [m.model_dump() for m in scoring_output.merchants],
+            "transactions": [t.model_dump() for t in scoring_output.transactions],
+            "summary": {
+                "total_merchants": len(scoring_output.merchants),
+                "likely_subscriptions": sum(1 for m in scoring_output.merchants if m.label == "likely_subscription"),
+                "possible_subscriptions": sum(1 for m in scoring_output.merchants if m.label == "possible_subscription"),
+                "gray_recurring_fees": sum(1 for m in scoring_output.merchants if "gray_recurring_fee" in m.tags),
+                "micro_subscriptions": sum(1 for m in scoring_output.merchants if "micro_subscription" in m.tags),
+                "possibly_unused": sum(1 for m in scoring_output.merchants if "possibly_unused_subscription" in m.tags)
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
